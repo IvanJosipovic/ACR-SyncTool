@@ -42,7 +42,7 @@ public class Worker : BackgroundService
                 return;
             }
 
-            if (action == nameof(SyncTool.ExportExistingImages) || action == nameof(SyncTool.LoadAndPushImages) && string.IsNullOrEmpty(acrHostName))
+            if ((action == nameof(SyncTool.ExportExistingImages) || action == nameof(SyncTool.LoadAndPushImages)) && string.IsNullOrEmpty(acrHostName))
             {
                 logger.LogError("--ACRHostName parameter is missing");
                 Environment.ExitCode = 1;
@@ -50,7 +50,7 @@ public class Worker : BackgroundService
                 return;
             }
 
-            if (action == nameof(SyncTool.PullAndSaveMissingImages) || action == nameof(SyncTool.LoadAndPushImages) && string.IsNullOrEmpty(imageTarFilePath))
+            if ((action == nameof(SyncTool.PullAndSaveMissingImages) || action == nameof(SyncTool.LoadAndPushImages)) && string.IsNullOrEmpty(imageTarFilePath))
             {
                 logger.LogError("--ImagesTarFilePath parameter is missing");
                 Environment.ExitCode = 1;
@@ -58,7 +58,7 @@ public class Worker : BackgroundService
                 return;
             }
 
-            if (action == nameof(SyncTool.ExportExistingImages) || action == nameof(SyncTool.PullAndSaveMissingImages) && string.IsNullOrEmpty(jsonExportFilePath))
+            if ((action == nameof(SyncTool.ExportExistingImages) || action == nameof(SyncTool.PullAndSaveMissingImages)) && string.IsNullOrEmpty(jsonExportFilePath))
             {
                 logger.LogError("--JsonExportFilePath parameter is missing");
                 Environment.ExitCode = 1;

@@ -15,6 +15,7 @@ This tool is split into 3 different steps:
   - This final mode is meant to be ran on your private Azure DevOps agents. It will load the image tar from the previous step, re tag them and push them to your private Azure Container Registry.
 
 # How to use
+
 - Install .Net 6
 - dotnet tool install --global acr-synctool
 - Create [appsettings.json](appsettings.json) and fill out the details
@@ -27,7 +28,8 @@ This tool is split into 3 different steps:
   - SyncedImaged
     - List of Docker Images to sync
     - Make sure to use the full image name ie registry.hub.docker.com/library/busybox
-- ```
+
+- ```json
   {
     "AzureContainerRegistries": [
       {
@@ -57,11 +59,13 @@ This tool is split into 3 different steps:
   ```
 
 ## Example Command Lines (execute in folder containing appsettings.json)
+
 - acr-synctool --Action ExportExistingImages --ACRHostName ijtestacr.azurecr.io --JsonExportFilePath acr-export.json
 - acr-synctool --Action PullAndSaveMissingImages --ImagesTarFilePath images.tar --JsonExportFilePath acr-export.json
 - acr-synctool --Action LoadAndPushImages --ACRHostName ijtestacr.azurecr.io --ImagesTarFilePath images.tar
 
 # Local Testing
+
 - dotnet pack
 - dotnet tool install --global --add-source ./src/bin/Debug/ acr-synctool
 - dotnet tool uninstall -g acr-synctool
