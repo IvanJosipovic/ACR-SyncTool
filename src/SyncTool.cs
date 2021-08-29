@@ -179,7 +179,7 @@ namespace ACR_SyncTool
                 return;
             }
 
-            var imageToPull = configuration.GetSection("SyncedImaged").Get<List<string>>();
+            var imageToPull = configuration.GetSection("SyncedImages").Get<List<string>>();
             var existingImages = JsonSerializer.Deserialize<List<ImageExport>>(File.OpenRead(jsonExportFilePath));
 
             var dockerClient = new DockerClientConfiguration().CreateClient();
