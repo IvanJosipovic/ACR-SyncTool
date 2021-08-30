@@ -192,6 +192,13 @@ namespace ACR_SyncTool
 
             foreach (var image in GetSyncedImages())
             {
+                if (await GetCurrentImageSizesGB() > configuration.GetValue<double>("MaxSyncSizeGB"))
+                {
+                    logger.LogInformation("{0} - {1} - Reached Max Sync Size {2}GB", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), configuration.GetValue<double>("MaxSyncSizeGB"));
+
+                    break;
+                }
+
                 var tags = await GetTags(image);
                 var existingImage = existingImages?.FirstOrDefault(x => x.Image == image);
 
@@ -199,6 +206,11 @@ namespace ACR_SyncTool
 
                 foreach (var tag in tags)
                 {
+                    if (await GetCurrentImageSizesGB() > configuration.GetValue<double>("MaxSyncSizeGB"))
+                    {
+                        break;
+                    }
+
                     if (existingImage == null || !existingImage.Tags.Contains(tag))
                     {
                         logger.LogInformation("{0} - {1} - Pulling {2}:{3}", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), image, tag);
@@ -288,6 +300,15 @@ namespace ACR_SyncTool
             }
 
             logger.LogInformation("{0} - {1} - Ending", DateTimeOffset.Now, nameof(LoadAndPushImages));
+        }
+
+        private async Task<double> GetCurrentImageSizesGB()
+        {
+            var dockerClient = new DockerClientConfiguration().CreateClient();
+
+            var images = await dockerClient.Images.ListImagesAsync(new ImagesListParameters() { All = true });
+
+            return images.Where(x => x.RepoTags[0] != "<none>:<none>").Sum(x => x.Size) / 1000000000.00;
         }
     }
 }
