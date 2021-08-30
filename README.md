@@ -25,7 +25,7 @@ This tool is split into 3 different steps:
     - List of Docker Registries and credentials
     - If a registry doesn't require credentials, you can exclude it from this list
     - AuthType can be Basic, PasswordOAuth or AnonymousOAuth
-  - SyncedImaged
+  - SyncedImages
     - List of Docker Images to sync
     - Make sure to use the full image name ie registry.hub.docker.com/library/busybox
 
@@ -47,7 +47,7 @@ This tool is split into 3 different steps:
         "Password": "Pat Password"
       }
     ],
-    "SyncedImaged": [
+    "SyncedImages": [
       "ghcr.io/fluxcd/helm-controller",
       "ghcr.io/fluxcd/image-automation-controller",
       "ghcr.io/fluxcd/image-reflector-controller",

@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Reflection;
+
 namespace ACR_SyncTool;
 
 public class Worker : BackgroundService
@@ -66,7 +69,7 @@ public class Worker : BackgroundService
                 return;
             }
 
-            logger.LogInformation("SyncTool started at: {time}", DateTimeOffset.Now);
+            logger.LogInformation("SyncTool {version} started at: {time}", FileVersionInfo.GetVersionInfo(GetType().Assembly.Location).ProductVersion, DateTimeOffset.Now);
 
             switch (action)
             {

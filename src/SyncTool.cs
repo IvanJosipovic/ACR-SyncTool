@@ -184,14 +184,13 @@ namespace ACR_SyncTool
                 return;
             }
 
-            var imageToPull = GetSyncedImages();
             var existingImages = JsonSerializer.Deserialize<List<ImageExport>>(File.OpenRead(jsonExportFilePath));
 
             var dockerClient = new DockerClientConfiguration().CreateClient();
 
             var savedImages = new List<string>();
 
-            foreach (var image in imageToPull)
+            foreach (var image in GetSyncedImages())
             {
                 var tags = await GetTags(image);
                 var existingImage = existingImages?.FirstOrDefault(x => x.Image == image);
