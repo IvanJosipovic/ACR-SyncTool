@@ -192,9 +192,10 @@ namespace ACR_SyncTool
 
             foreach (var image in GetSyncedImages())
             {
-                if (await GetCurrentImageSizesGB() > configuration.GetValue<double>("MaxSyncSizeGB"))
+                var currentImageSize = await GetCurrentImageSizesGB();
+                if (currentImageSize > configuration.GetValue<double>("MaxSyncSizeGB"))
                 {
-                    logger.LogInformation("{0} - {1} - Reached Max Sync Size {2}GB", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), configuration.GetValue<double>("MaxSyncSizeGB"));
+                    logger.LogWarning("{0} - {1} - Reached Max Sync Size {2}/{3}GB", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), currentImageSize, configuration.GetValue<double>("MaxSyncSizeGB"));
 
                     break;
                 }
