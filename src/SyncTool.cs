@@ -79,6 +79,11 @@ namespace ACR_SyncTool
             return match.Groups[4].Value;
         }
 
+        private List<string> GetSyncedImages()
+        {
+            return configuration.GetSection("SyncedImages").Get<List<string>>();
+        }
+
         private IRegistryClient GetClient(string host)
         {
             var regClientConfig = new RegistryClientConfiguration(host);
@@ -179,7 +184,7 @@ namespace ACR_SyncTool
                 return;
             }
 
-            var imageToPull = configuration.GetSection("SyncedImages").Get<List<string>>();
+            var imageToPull = GetSyncedImages();
             var existingImages = JsonSerializer.Deserialize<List<ImageExport>>(File.OpenRead(jsonExportFilePath));
 
             var dockerClient = new DockerClientConfiguration().CreateClient();
@@ -259,8 +264,15 @@ namespace ACR_SyncTool
 
             var registryConfig = GetACRConfig(acrHostName);
 
+            var syncedImages = GetSyncedImages();
+
             foreach (var image in images)
             {
+                if (!syncedImages.Contains(GetHostImage(image.RepoTags[0])))
+                {
+                    continue;
+                }
+
                 logger.LogInformation("{0} - {1} - Pushing Image {2}", DateTimeOffset.Now, nameof(LoadAndPushImages), $"{acrHostName}/{GetHostImage(image.RepoTags[0])}:{GetTag(image.RepoTags[0])}");
 
                 await dockerClient.Images.TagImageAsync(image.RepoTags[0], new ImageTagParameters() { RepositoryName = $"{acrHostName}/{GetHostImage(image.RepoTags[0])}", Tag = GetTag(image.RepoTags[0]) });
