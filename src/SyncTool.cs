@@ -267,7 +267,7 @@ namespace ACR_SyncTool
 
             foreach (var image in images)
             {
-                if (!syncedImages.Contains(GetHostImage(image.RepoTags[0])))
+                if (image.RepoTags[0] == "<none>:<none>" || !syncedImages.Contains(GetHostImage(image.RepoTags[0])))
                 {
                     continue;
                 }
