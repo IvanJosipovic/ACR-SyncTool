@@ -20,14 +20,19 @@ This tool is split into 3 different steps:
 - dotnet tool install --global acr-synctool
 - Create [appsettings.json](appsettings.json) and fill out the details
   - AzureContainerRegistries
-    - List of Azure Container Registries and Service Principle Credentials
+    - List of Azure Container Registries with Service Principle Credentials
   - Registries
     - List of Docker Registries and credentials
     - If a registry doesn't require credentials, you can exclude it from this list
     - AuthType can be Basic, PasswordOAuth or AnonymousOAuth
   - SyncedImages
     - List of Docker Images to sync
-    - Make sure to use the full image name ie registry.hub.docker.com/library/busybox
+    - Image
+      - Full image name ie registry.hub.docker.com/library/busybox
+    - Semver
+      - Semver rule, if it doesn't match, the Tag will not be synced
+    - Regex
+      - Regex rule, if it doesn't match, the Tag will not be synced
 
 - ```json
   {
@@ -42,18 +47,46 @@ This tool is split into 3 different steps:
     "Registries": [
       {
         "Host": "ghcr.io",
-        "AuthType": "PasswordOAuth", // Basic, PasswordOAuth, AnonymousOAuth
+        "AuthType": "PasswordOAuth", 
         "Username": "ivanjosipovic",
-        "Password": "Pat Password"
+        "Password": "Pat Token"
+      },
+      {
+        "Host": "registry.hub.docker.com",
+        "AuthType": "PasswordOAuth",
+        "Username": "ivanjosipovic",
+        "Password": "Access Tokens"
       }
     ],
-    "SyncedImages": [
-      "ghcr.io/fluxcd/helm-controller",
-      "ghcr.io/fluxcd/image-automation-controller",
-      "ghcr.io/fluxcd/image-reflector-controller",
-      "ghcr.io/fluxcd/kustomize-controller",
-      "ghcr.io/fluxcd/notification-controller",
-      "ghcr.io/fluxcd/source-controller"
+  "SyncedImages": [
+    {
+      "Image": "ghcr.io/fluxcd/helm-controller",
+      "Semver": ">=0.11.0"
+    },
+    {
+      "Image": "ghcr.io/fluxcd/image-automation-controller",
+      "Semver": ">=0.14.0"
+    },
+    {
+      "Image": "ghcr.io/fluxcd/image-reflector-controller",
+      "Semver": ">=0.11.0"
+    },
+    {
+      "Image": "ghcr.io/fluxcd/kustomize-controller",
+      "Semver": ">=0.14.0"
+    },
+    {
+      "Image": "ghcr.io/fluxcd/notification-controller",
+      "Semver": ">=0.16.0"
+    },
+    {
+      "Image": "ghcr.io/fluxcd/source-controller",
+      "Semver": ">=0.15.0"
+    },
+    {
+      "Image": "registry.hub.docker.com/nginx/nginx-ingress",
+      "Semver": ">=1.12.0"
+    }
     ]
   }
   ```
@@ -64,7 +97,7 @@ This tool is split into 3 different steps:
 - acr-synctool --Action PullAndSaveMissingImages --ImagesTarFilePath images.tar --JsonExportFilePath acr-export.json
 - acr-synctool --Action LoadAndPushImages --ACRHostName ijtestacr.azurecr.io --ImagesTarFilePath images.tar
 
-# Local Testing
+## Local Testing
 
 - dotnet pack
 - dotnet tool install --global --add-source ./src/bin/Debug/ acr-synctool

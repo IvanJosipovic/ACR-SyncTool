@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Azure.Containers.ContainerRegistry;
 using Azure.Identity;
-using Azure;
 using ACR_SyncTool.Models;
 using System.Text.Json;
 using Docker.DotNet;
@@ -78,9 +72,9 @@ namespace ACR_SyncTool
             return match.Groups[4].Value;
         }
 
-        private List<string> GetSyncedImages()
+        private List<SyncedImage> GetSyncedImages()
         {
-            return configuration.GetSection("SyncedImages").Get<List<string>>();
+            return configuration.GetSection("SyncedImages").Get<List<SyncedImage>>();
         }
 
         private RegistryConfig? GetRegistryConfig(string host)
@@ -190,7 +184,7 @@ namespace ACR_SyncTool
 
             var savedImages = new List<string>();
 
-            foreach (var image in GetSyncedImages())
+            foreach (SyncedImage image in GetSyncedImages())
             {
                 var currentImageSize = await GetCurrentImageSizesGB();
 
@@ -201,17 +195,37 @@ namespace ACR_SyncTool
                     break;
                 }
 
-                var existingImage = existingImages?.FirstOrDefault(x => x.Image == image);
+                var existingImage = existingImages?.FirstOrDefault(x => x.Image == image.Image);
 
-                var registryConfig = GetRegistryConfig(GetHost(image));
+                var registryConfig = GetRegistryConfig(GetHost(image.Image));
 
-                var tags = await GetTags(image);
+                var tags = await GetTags(image.Image);
 
                 foreach (var tag in tags)
                 {
                     if (await GetCurrentImageSizesGB() > configuration.GetValue<double>("MaxSyncSizeGB"))
                     {
                         break;
+                    }
+
+                    if (!string.IsNullOrEmpty(image.Semver))
+                    {
+                        var range = new SemanticVersioning.Range(image.Semver);
+
+                        if (!range.IsSatisfied(tag))
+                        {
+                            logger.LogDebug("{0} - {1} - Skipped to due Semver {2} {0}:{1}", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), image.Semver, image.Image, tag);
+                            continue;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(image.Regex))
+                    {
+                        if (Regex.IsMatch(tag, image.Regex))
+                        {
+                            logger.LogDebug("{0} - {1} - Skipped to due Regex {2} {0}:{1}", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), image.Regex, image.Image, tag);
+                            continue;
+                        }
                     }
 
                     if (existingImage == null || !existingImage.Tags.Contains(tag))
@@ -231,7 +245,7 @@ namespace ACR_SyncTool
                         await dockerClient.Images.CreateImageAsync(
                             new ImagesCreateParameters
                             {
-                                FromImage = image,
+                                FromImage = image.Image,
                                 Tag = tag,
                             },
                             authConfig,
@@ -283,7 +297,7 @@ namespace ACR_SyncTool
 
             foreach (var image in images)
             {
-                if (image.RepoTags[0] == "<none>:<none>" || !syncedImages.Contains(GetHostImage(image.RepoTags[0])))
+                if (image.RepoTags[0] == "<none>:<none>" || !syncedImages.Any(x => x.Image == GetHostImage(image.RepoTags[0])))
                 {
                     continue;
                 }
