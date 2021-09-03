@@ -15,7 +15,7 @@ namespace ACR_SyncTool.DockerClient
     public class DockerTagClient
     {
         private readonly string host;
-        
+
         private readonly AuthenticationProvider authenticationProvider;
 
         public bool Https { get; set; } = true;

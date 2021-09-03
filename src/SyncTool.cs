@@ -109,7 +109,7 @@ namespace ACR_SyncTool
             if (registryConfig == null || registryConfig.AuthType == null)
             {
                 client = new DockerTagClient(GetHost(image));
-            } 
+            }
             else
             {
                 switch (registryConfig.AuthType)

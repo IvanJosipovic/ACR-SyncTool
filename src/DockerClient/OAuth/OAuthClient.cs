@@ -22,9 +22,9 @@ namespace ACR_SyncTool.DockerClient.OAuth
             queryString.AddIfNotEmpty("scope", scope);
 
             var builder = new UriBuilder(new Uri(realm))
-                          {
-                              Query = queryString.GetQueryString()
-                          };
+            {
+                Query = queryString.GetQueryString()
+            };
 
             var request = new HttpRequestMessage(HttpMethod.Get, builder.Uri);
 
