@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace ACR_SyncTool.DockerClient
 {
@@ -36,19 +37,28 @@ namespace ACR_SyncTool.DockerClient
         {
             var tags = new List<string>();
 
+            tags.AddRange(await GetTagsRecurs($"{(Https ? "https" : "http")}://{host}/v2/{image}/tags/list"));
+
+            return tags;
+        }
+
+        private async Task<List<string>> GetTagsRecurs(string url)
+        {
+            var tags = new List<string>();
+
             var handler = new HttpClientHandler();
 
             handler = authenticationProvider.UpdateHttpClientHandler(handler);
 
             var httpClient = new HttpClient(handler);
 
-            var request = CreateRequest(image);
+            var request = CreateRequest(url);
 
             var response = await httpClient.SendAsync(request);
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                var request2 = CreateRequest(image);
+                var request2 = CreateRequest(url);
 
                 await authenticationProvider.AuthenticateAsync(request2, response);
 
@@ -59,18 +69,33 @@ namespace ACR_SyncTool.DockerClient
             {
                 var responseContent = await response.Content.ReadFromJsonAsync<ListImageTagsResponse>();
 
+                if (response.Headers.Contains("link"))
+                {
+                    var link = response.Headers.GetValues("link").First();
+
+                    var matches = Regex.Match(link, "<(.+)>; rel=\"next\"");
+
+                    var pageQuery = matches.Groups[1].Value;
+
+                    var newTags = await GetTagsRecurs($"{(Https ? "https" : "http")}://{host}{pageQuery}");
+
+                    tags.AddRange(newTags);
+                }
+
                 tags.AddRange(responseContent.Tags);
+
+                return tags;
             }
 
-            return tags;
+            throw new Exception($"Error making http call {response.StatusCode} - {url} - {await response.Content.ReadAsStringAsync()}");
         }
 
-        private HttpRequestMessage CreateRequest(string image)
+        private HttpRequestMessage CreateRequest(string url)
         {
             return new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri($"{(Https ? "https" : "http")}://{host}/v2/{image}/tags/list")
+                RequestUri = new Uri(url)
             };
         }
 
