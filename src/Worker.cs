@@ -1,8 +1,3 @@
-using System.Diagnostics;
-using System.Reflection;
-
-namespace ACR_SyncTool;
-
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> logger;
@@ -24,9 +19,9 @@ public class Worker : BackgroundService
     {
         try
         {
-            if (!File.Exists(Path.Combine(hostEnvironment.ContentRootPath, "appsettings.json")))
+            if (!((ConfigurationRoot)configuration).Providers.Any(x => (x as JsonConfigurationProvider)?.Source.Path == "appsettings.json"))
             {
-                logger.LogError("missing appsettings.json");
+                logger.LogError("Missing appsettings.json");
                 Environment.ExitCode = 1;
                 appLifetime.StopApplication();
                 return;

@@ -1,8 +1,7 @@
-﻿namespace ACR_SyncTool.Models
+﻿namespace ACR_SyncTool.Models;
+
+class ImageExport
 {
-    class ImageExport
-    {
-        public string Image { get; set; } = String.Empty;
-        public List<string> Tags { get; set; } = new List<string>();
-    }
+    public string Image { get; set; } = string.Empty;
+    public List<string> Tags { get; set; } = new List<string>();
 }

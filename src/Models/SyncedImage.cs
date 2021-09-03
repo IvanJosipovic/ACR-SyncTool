@@ -1,17 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace ACR_SyncTool.Models;
 
-namespace ACR_SyncTool.Models
+public class SyncedImage
 {
-    public class SyncedImage
-    {
-        public string Image { get; set; }
-
-        public string Semver { get; set; }
-
-        public string Regex { get; set; }
-    }
+    public string Image { get; set; } = string.Empty;
+    public string Semver { get; set; } = string.Empty;
+    public string Regex { get; set; } = string.Empty;
 }

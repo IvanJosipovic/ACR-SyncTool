@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿namespace ACR_SyncTool.DockerClient.Extensionis;
 
-namespace ACR_SyncTool.DockerClient
+internal static class IDictionaryExtensions
 {
-    internal static class IDictionaryExtensions
+    public static TValue GetValueOrDefault<TKey, TValue>(
+        this IDictionary<TKey, TValue> dict,
+        TKey key)
     {
-        public static TValue GetValueOrDefault<TKey, TValue>(
-            this IDictionary<TKey, TValue> dict,
-            TKey key)
-        {
-            if (dict.TryGetValue(key, out var value))
-                return value;
+        if (dict.TryGetValue(key, out var value))
+            return value;
 
-            return default;
-        }
+        return default;
     }
 }

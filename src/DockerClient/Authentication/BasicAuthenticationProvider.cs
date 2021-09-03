@@ -1,38 +1,34 @@
-﻿using System.Net.Http.Headers;
-using System.Text;
+﻿namespace ACR_SyncTool.DockerClient.Authentication;
 
-namespace ACR_SyncTool.DockerClient.Authentication
+public class BasicAuthenticationProvider : AuthenticationProvider
 {
-    public class BasicAuthenticationProvider : AuthenticationProvider
+    private readonly string _password;
+
+    private readonly string _username;
+
+    public BasicAuthenticationProvider(string username, string password)
     {
-        private readonly string _password;
+        _username = username;
+        _password = password;
+    }
 
-        private readonly string _username;
+    private static string Schema { get; } = "Basic";
 
-        public BasicAuthenticationProvider(string username, string password)
-        {
-            _username = username;
-            _password = password;
-        }
+    public override Task AuthenticateAsync(HttpRequestMessage request, HttpResponseMessage response)
+    {
+        TryGetSchemaHeader(response, Schema);
 
-        private static string Schema { get; } = "Basic";
+        var passBytes = Encoding.UTF8.GetBytes($"{_username}:{_password}");
+        var base64Pass = Convert.ToBase64String(passBytes);
 
-        public override Task AuthenticateAsync(HttpRequestMessage request, HttpResponseMessage response)
-        {
-            TryGetSchemaHeader(response, Schema);
+        //Set the header
+        request.Headers.Authorization = new AuthenticationHeaderValue(Schema, base64Pass);
 
-            var passBytes = Encoding.UTF8.GetBytes($"{_username}:{_password}");
-            var base64Pass = Convert.ToBase64String(passBytes);
+        return Task.CompletedTask;
+    }
 
-            //Set the header
-            request.Headers.Authorization = new AuthenticationHeaderValue(Schema, base64Pass);
-
-            return Task.CompletedTask;
-        }
-
-        public override HttpClientHandler UpdateHttpClientHandler(HttpClientHandler httpClientHandler)
-        {
-            return httpClientHandler;
-        }
+    public override HttpClientHandler UpdateHttpClientHandler(HttpClientHandler httpClientHandler)
+    {
+        return httpClientHandler;
     }
 }

@@ -1,14 +1,10 @@
-using ACR_SyncTool;
-
 IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureHostConfiguration(configBuilder =>
+    .ConfigureLogging(loggingBuilder =>
     {
-        configBuilder.AddInMemoryCollection(new List<KeyValuePair<string, string>>()
-        {
-            { new KeyValuePair<string, string>("Logging:LogLevel:Default", "Information") },
-            { new KeyValuePair<string, string>("Logging:LogLevel:Microsoft", "Warning") },
-            { new KeyValuePair<string, string>("Logging:LogLevel:Microsoft.Hosting.Lifetime", "Warning") },
-        });
+        loggingBuilder.SetMinimumLevel(LogLevel.Debug);
+        loggingBuilder.AddFilter("Default", LogLevel.Debug);
+        loggingBuilder.AddFilter("Microsoft", LogLevel.Warning);
+        loggingBuilder.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
     })
     .ConfigureServices((hostBuilder, services) =>
     {

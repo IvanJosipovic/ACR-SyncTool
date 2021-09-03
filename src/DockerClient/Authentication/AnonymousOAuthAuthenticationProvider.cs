@@ -1,38 +1,30 @@
-﻿using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
-using ACR_SyncTool.DockerClient.OAuth;
+﻿namespace ACR_SyncTool.DockerClient.Authentication;
 
-
-namespace ACR_SyncTool.DockerClient.Authentication
+public class AnonymousOAuthAuthenticationProvider : AuthenticationProvider
 {
-    public class AnonymousOAuthAuthenticationProvider : AuthenticationProvider
+    private readonly OAuthClient _client = new OAuthClient();
+
+    private static string Schema { get; } = "Bearer";
+
+    public override async Task AuthenticateAsync(HttpRequestMessage request, HttpResponseMessage response)
     {
-        private readonly OAuthClient _client = new OAuthClient();
+        var header = TryGetSchemaHeader(response, Schema);
 
-        private static string Schema { get; } = "Bearer";
+        //Get the bearer bits
+        var bearerBits = AuthenticateParser.ParseTyped(header.Parameter);
 
-        public override async Task AuthenticateAsync(HttpRequestMessage request, HttpResponseMessage response)
-        {
-            var header = TryGetSchemaHeader(response, Schema);
+        //Get the token
+        var token = await _client.GetTokenAsync(
+                        bearerBits.Realm,
+                        bearerBits.Service,
+                        bearerBits.Scope);
 
-            //Get the bearer bits
-            var bearerBits = AuthenticateParser.ParseTyped(header.Parameter);
+        //Set the header
+        request.Headers.Authorization = new AuthenticationHeaderValue(Schema, token.Token);
+    }
 
-            //Get the token
-            var token = await _client.GetTokenAsync(
-                            bearerBits.Realm,
-                            bearerBits.Service,
-                            bearerBits.Scope);
-
-            //Set the header
-            request.Headers.Authorization = new AuthenticationHeaderValue(Schema, token.Token);
-        }
-
-        public override HttpClientHandler UpdateHttpClientHandler(HttpClientHandler httpClientHandler)
-        {
-            return httpClientHandler;
-        }
+    public override HttpClientHandler UpdateHttpClientHandler(HttpClientHandler httpClientHandler)
+    {
+        return httpClientHandler;
     }
 }

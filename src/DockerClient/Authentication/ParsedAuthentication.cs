@@ -1,18 +1,17 @@
-﻿namespace ACR_SyncTool.DockerClient.Authentication
+﻿namespace ACR_SyncTool.DockerClient.Authentication;
+
+internal class ParsedAuthentication
 {
-    internal class ParsedAuthentication
+    public string Realm { get; }
+
+    public string Service { get; }
+
+    public string Scope { get; }
+
+    public ParsedAuthentication(string realm, string service, string scope)
     {
-        public string Realm { get; }
-
-        public string Service { get; }
-
-        public string Scope { get; }
-
-        public ParsedAuthentication(string realm, string service, string scope)
-        {
-            Realm = realm;
-            Service = service;
-            Scope = scope;
-        }
+        Realm = realm;
+        Service = service;
+        Scope = scope;
     }
 }
