@@ -1,7 +1,4 @@
-﻿using Docker.Registry.DotNet;
-using Docker.Registry.DotNet.Authentication;
-using Docker.Registry.DotNet.Registry;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +11,8 @@ using ACR_SyncTool.Models;
 using System.Text.Json;
 using Docker.DotNet;
 using Docker.DotNet.Models;
+using ACR_SyncTool.DockerClient;
+using ACR_SyncTool.DockerClient.Authentication;
 
 namespace ACR_SyncTool
 {
@@ -84,26 +83,6 @@ namespace ACR_SyncTool
             return configuration.GetSection("SyncedImages").Get<List<string>>();
         }
 
-        private IRegistryClient GetClient(string host)
-        {
-            var regClientConfig = new RegistryClientConfiguration(host);
-
-            var registryConfig = GetRegistryConfig(host);
-
-            if (registryConfig == null || registryConfig.AuthType == null)
-            {
-                return regClientConfig.CreateClient();
-            }
-
-            return registryConfig.AuthType switch
-            {
-                "Basic" => regClientConfig.CreateClient(new BasicAuthenticationProvider(registryConfig.Username, registryConfig.Password)),
-                "PasswordOAuth" => regClientConfig.CreateClient(new PasswordOAuthAuthenticationProvider(registryConfig.Username, registryConfig.Password)),
-                "AnonymousOAuth" => regClientConfig.CreateClient(new AnonymousOAuthAuthenticationProvider()),
-                _ => throw new Exception($"Unknown AuthType: {registryConfig.AuthType}"),
-            };
-        }
-
         private RegistryConfig? GetRegistryConfig(string host)
         {
             return configuration.GetSection("Registries").Get<List<RegistryConfig>>().Find(x => x.Host == host);
@@ -123,11 +102,33 @@ namespace ACR_SyncTool
 
         private async Task<List<string>> GetTags(string image)
         {
-            using var client = GetClient(GetHost(image));
+            var registryConfig = GetRegistryConfig(GetHost(image));
 
-            var tags = await client.Tags.ListImageTagsAsync(GetImage(image));
+            DockerTagClient? client = null;
 
-            return tags.Tags.ToList();
+            if (registryConfig == null || registryConfig.AuthType == null)
+            {
+                client = new DockerTagClient(GetHost(image));
+            } 
+            else
+            {
+                switch (registryConfig.AuthType)
+                {
+                    case "Basic":
+                        client = new DockerTagClient(GetHost(image), new BasicAuthenticationProvider(registryConfig.Username, registryConfig.Password));
+                        break;
+                    case "PasswordOAuth":
+                        client = new DockerTagClient(GetHost(image), new PasswordOAuthAuthenticationProvider(registryConfig.Username, registryConfig.Password));
+                        break;
+                    case "AnonymousOAuth":
+                        client = new DockerTagClient(GetHost(image), new AnonymousOAuthAuthenticationProvider());
+                        break;
+                    default:
+                        throw new Exception($"Unknown AuthType: {registryConfig.AuthType}");
+                }
+            }
+
+            return await client.GetTags(GetImage(image));
         }
 
         public void ExportExistingImages(string acrHostName, string jsonExportFilePath)
@@ -146,8 +147,7 @@ namespace ACR_SyncTool
 
             var export = new List<ImageExport>();
 
-            var repositryNames = client.GetRepositoryNames();
-            foreach (string repositryName in repositryNames)
+            foreach (string repositryName in client.GetRepositoryNames())
             {
                 var imageExport = new ImageExport
                 {
@@ -156,8 +156,7 @@ namespace ACR_SyncTool
 
                 var repo = client.GetRepository(repositryName);
 
-                var manifests = repo.GetManifestPropertiesCollection();
-                foreach (var manifest in manifests)
+                foreach (var manifest in repo.GetManifestPropertiesCollection())
                 {
                     if (manifest.Tags.Count > 0)
                     {
@@ -169,6 +168,7 @@ namespace ACR_SyncTool
             }
 
             var json = JsonSerializer.Serialize(export, new JsonSerializerOptions() { WriteIndented = true });
+
             File.WriteAllText(jsonExportFilePath, json);
 
             logger.LogInformation("{0} - {1} - Ending", DateTimeOffset.Now, nameof(ExportExistingImages));
@@ -193,17 +193,19 @@ namespace ACR_SyncTool
             foreach (var image in GetSyncedImages())
             {
                 var currentImageSize = await GetCurrentImageSizesGB();
+
                 if (currentImageSize > configuration.GetValue<double>("MaxSyncSizeGB"))
                 {
-                    logger.LogWarning("{0} - {1} - Reached Max Sync Size {2}/{3}GB", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), currentImageSize, configuration.GetValue<double>("MaxSyncSizeGB"));
+                    logger.LogWarning("{0} - {1} - Reached Max Sync Size {2:D2}/{3}GB", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), currentImageSize, configuration.GetValue<double>("MaxSyncSizeGB"));
 
                     break;
                 }
 
-                var tags = await GetTags(image);
                 var existingImage = existingImages?.FirstOrDefault(x => x.Image == image);
 
                 var registryConfig = GetRegistryConfig(GetHost(image));
+
+                var tags = await GetTags(image);
 
                 foreach (var tag in tags)
                 {
@@ -219,6 +221,7 @@ namespace ACR_SyncTool
                         savedImages.Add($"{image}:{tag}");
 
                         var authConfig = new AuthConfig();
+
                         if (registryConfig != null)
                         {
                             authConfig.Username = registryConfig.Username;
