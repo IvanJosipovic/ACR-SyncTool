@@ -1,11 +1,6 @@
 ﻿using ACR_SyncTool.DockerClient.Authentication;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 
 namespace ACR_SyncTool.DockerClient
@@ -37,12 +32,12 @@ namespace ACR_SyncTool.DockerClient
         {
             var tags = new List<string>();
 
-            tags.AddRange(await GetTagsRecurs($"{(Https ? "https" : "http")}://{host}/v2/{image}/tags/list"));
+            tags.AddRange(await GetTagsRecursive($"{(Https ? "https" : "http")}://{host}/v2/{image}/tags/list"));
 
             return tags;
         }
 
-        private async Task<List<string>> GetTagsRecurs(string url)
+        private async Task<List<string>> GetTagsRecursive(string url)
         {
             var tags = new List<string>();
 
@@ -77,7 +72,7 @@ namespace ACR_SyncTool.DockerClient
 
                     var pageQuery = matches.Groups[1].Value;
 
-                    var newTags = await GetTagsRecurs($"{(Https ? "https" : "http")}://{host}{pageQuery}");
+                    var newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{host}{pageQuery}");
 
                     tags.AddRange(newTags);
                 }
