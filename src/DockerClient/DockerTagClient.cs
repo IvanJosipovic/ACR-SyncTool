@@ -67,6 +67,9 @@ public class DockerTagClient
 
                 var pageQuery = matches.Groups[1].Value;
 
+                // Delay recursion to prevent "429 Too Many Requests" errors
+                await Task.Delay(TimeSpan.FromSeconds(30));
+
                 var newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{host}{pageQuery}");
 
                 tags.AddRange(newTags);
