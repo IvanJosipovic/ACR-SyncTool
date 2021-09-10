@@ -179,7 +179,16 @@
 
             var registryConfig = GetRegistryConfig(GetHost(image.Image));
 
-            var tags = await GetTags(image.Image);
+            List<string>? tags;
+
+            if (image.Tags != null)
+            {
+                tags = image.Tags;
+            }
+            else
+            {
+                tags = await GetTags(image.Image);
+            }
 
             foreach (var tag in tags)
             {
