@@ -1,12 +1,15 @@
 # ACR-SyncTool
 
-# What is this for?
+## What is this for?
+
 It is common practice to have the Azure Container Registry behind a firewall and inaccessable from the outside world. Additionally it is common practice to prevent AKS from loading images from public Docker Repositories. These two practices make it difficult to deploy images to the AKS cluster.
 
 This tool aims to make this process easier by allowing you to sync images from a Docker Registry to the private Azure Container Registries.
 
-# How it works
+## How it works
+
 This tool is split into 3 different steps:
+
 - ExportExistingImages
   - The first step is meant to be ran on your private Azure DevOps agents which have access to the Azure Container Registry. This step will export all the image names and tags to a json file. Your CI/CD pipeline should save this file to the Pipeline Artifacts and make it accessible to the next step.
 - PullAndSaveMissingImages
@@ -14,7 +17,7 @@ This tool is split into 3 different steps:
 - LoadAndPushImages
   - This final mode is meant to be ran on your private Azure DevOps agents. It will load the image tar from the previous step, re tag them and push them to your private Azure Container Registry.
 
-# How to use
+## How to use
 
 - Install .Net 6
 - dotnet tool install --global acr-synctool
@@ -33,6 +36,8 @@ This tool is split into 3 different steps:
       - Semver rule, if it doesn't match, the Tag will not be synced
     - Regex
       - Regex rule, if it doesn't match, the Tag will not be synced
+    - Tags
+      - Array of specific tags to sync
 
 - ```json
   {
@@ -85,7 +90,9 @@ This tool is split into 3 different steps:
     },
     {
       "Image": "registry.hub.docker.com/nginx/nginx-ingress",
-      "Semver": ">=1.12.0"
+      "Tags": [
+        "1.12.0"
+      ]
     }
     ]
   }
