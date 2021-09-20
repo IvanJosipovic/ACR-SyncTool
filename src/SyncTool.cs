@@ -181,7 +181,7 @@
 
             List<string>? tags;
 
-            if (image.Tags != null)
+            if (image.Tags.Count > 0)
             {
                 tags = image.Tags;
             }
