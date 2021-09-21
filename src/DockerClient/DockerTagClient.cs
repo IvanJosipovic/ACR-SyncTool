@@ -75,7 +75,10 @@ public class DockerTagClient
                 tags.AddRange(newTags);
             }
 
-            tags.AddRange(responseContent.Tags);
+            if (responseContent != null)
+            {
+                tags.AddRange(responseContent.Tags);
+            }
 
             return tags;
         }
@@ -94,8 +97,8 @@ public class DockerTagClient
 
     private class ListImageTagsResponse
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        public string[] Tags { get; set; }
+        public string[] Tags { get; set; } = Array.Empty<string>();
     }
 }

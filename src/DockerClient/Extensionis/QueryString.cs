@@ -12,7 +12,7 @@ internal class QueryString
                 pair => string.Join(
                     "&",
                     pair.Value.Select(
-                        v => $"{Uri.EscapeUriString(pair.Key)}={Uri.EscapeDataString(v)}"))));
+                        v => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(v)}"))));
     }
 
     public void Add(string key, string value)

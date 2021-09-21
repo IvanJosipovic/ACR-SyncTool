@@ -10,6 +10,11 @@ public class AnonymousOAuthAuthenticationProvider : AuthenticationProvider
     {
         var header = TryGetSchemaHeader(response, Schema);
 
+        if (header.Parameter == null)
+        {
+            throw new Exception("Berer details missing in header");
+        }
+
         //Get the bearer bits
         var bearerBits = AuthenticateParser.ParseTyped(header.Parameter);
 

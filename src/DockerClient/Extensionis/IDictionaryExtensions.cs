@@ -2,7 +2,7 @@
 
 internal static class IDictionaryExtensions
 {
-    public static TValue GetValueOrDefault<TKey, TValue>(
+    public static TValue? GetValueOrDefault<TKey, TValue>(
         this IDictionary<TKey, TValue> dict,
         TKey key)
     {

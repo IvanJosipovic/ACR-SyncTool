@@ -57,9 +57,12 @@ internal static class AuthenticateParser
         var parsed = Parse(value);
 
         return new ParsedAuthentication(
+#pragma warning disable CS8604 // Possible null reference argument.
             parsed.GetValueOrDefault("realm"),
             parsed.GetValueOrDefault("service"),
-            parsed.GetValueOrDefault("scope"));
+            parsed.GetValueOrDefault("scope")
+#pragma warning restore CS8604 // Possible null reference argument.
+            );
     }
 
     private static string GetKey(string pair)

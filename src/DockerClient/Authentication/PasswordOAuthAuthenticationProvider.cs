@@ -20,16 +20,21 @@ public class PasswordOAuthAuthenticationProvider : AuthenticationProvider
     {
         var header = this.TryGetSchemaHeader(response, Schema);
 
+        if (header.Parameter == null)
+        {
+            throw new Exception("Berer details missing in header");
+        }
+
         //Get the bearer bits
         var bearerBits = AuthenticateParser.ParseTyped(header.Parameter);
 
         //Get the token
-        var token = await this._client.GetTokenAsync(
+        var token = await _client.GetTokenAsync(
                         bearerBits.Realm,
                         bearerBits.Service,
                         bearerBits.Scope,
-                        this._username,
-                        this._password);
+                        _username,
+                        _password);
 
         //Set the header
         request.Headers.Authorization = new AuthenticationHeaderValue(Schema, token.Token);
