@@ -2,9 +2,7 @@
   "profiles": {
     "ACR-SyncTool": {
       "commandName": "Project",
-      "commandLineArgs1": "--Action ExportExistingImages --ACRHostName ijtestacr.azurecr.io --JsonExportFilePath acr-export.json",
-      "commandLineArgs2": "--Action PullAndSaveMissingImages --ImagesTarFilePath images.tar --JsonExportFilePath acr-export.json",
-      "commandLineArgs": "--Action LoadAndPushImages --ACRHostName ijtestacr.azurecr.io --ImagesTarFilePath images.tar",
+      "commandLineArgs": "",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       },
