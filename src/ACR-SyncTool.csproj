@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>dotnet-ACR_SyncTool-BC887A04-72C3-4B84-941B-59BFEB391E7A</UserSecretsId>
+    <RootNamespace>ACR_SyncTool</RootNamespace>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <OutputType>exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <IsPackable>true</IsPackable>
+    <ToolCommandName>acr-synctool</ToolCommandName>
+    <PackageId>ACR-SyncTool</PackageId>
+    <Authors>Ivan Josipovic</Authors>
+    <Description>Command line tool to synchronize Docker Image Registries to private Azure Container Registries</Description>
+    <PackageTags>docker;image;sync;synchronize;acr;Azure Container Registry</PackageTags>
+    <RepositoryUrl>https://github.com/IvanJosipovic/ACR-SyncTool</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Containers.ContainerRegistry" Version="1.1.0-beta.1" />
+    <PackageReference Include="Azure.Identity" Version="1.4.1" />
+    <PackageReference Include="Docker.DotNet" Version="3.125.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.0-rc.1.21451.13" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0-rc.1.21451.13" />
+    <PackageReference Include="SemanticVersioning" Version="2.0.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="6.0.0-rc.1.21451.13" />
+  </ItemGroup>
+</Project>
