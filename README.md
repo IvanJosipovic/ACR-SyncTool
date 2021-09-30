@@ -25,6 +25,8 @@ This tool is split into 3 different steps:
 - [Install .Net 6](https://dotnet.microsoft.com/download/dotnet/6.0/runtime)
 - dotnet tool install --global acr-synctool
 - Create [appsettings.json](appsettings.json) and fill out the details
+  - MaxSyncSizeGB
+    - Max total image size to sync. Once reached the rest will be skipped.
   - AzureContainerRegistries
     - List of Azure Container Registries with Service Principle Credentials
   - Registries
@@ -44,6 +46,7 @@ This tool is split into 3 different steps:
 
 - ```json
   {
+    "MaxSyncSizeGB": "5",
     "AzureContainerRegistries": [
       {
         "Host": "ijtestacr.azurecr.io",
