@@ -1,8 +1,11 @@
 # ACR-SyncTool
 
+[![Nuget](https://img.shields.io/nuget/vpre/ACR-SyncTool.svg?style=flat-square)](https://www.nuget.org/packages/ACR-SyncTool)
+[![Nuget)](https://img.shields.io/nuget/dt/ACR-SyncTool.svg?style=flat-square)](https://www.nuget.org/packages/ACR-SyncTool)
+
 ## What is this for?
 
-It is common practice to have the Azure Container Registry behind a firewall and inaccessable from the outside world. Additionally it is common practice to prevent AKS from loading images from public Docker Repositories. These two practices make it difficult to deploy images to the AKS cluster.
+It is common practice to have the Azure Container Registry behind a firewall and inaccessable from the outside world. Additionally, it is common practice to prevent AKS from loading images from public Docker Repositories. These two practices make it difficult to deploy images to the AKS cluster.
 
 This tool aims to make this process easier by allowing you to sync images from a Docker Registry to the private Azure Container Registries.
 
@@ -19,7 +22,7 @@ This tool is split into 3 different steps:
 
 ## How to use
 
-- Install .Net 6
+- [Install .Net 6](https://dotnet.microsoft.com/download/dotnet/6.0/runtime)
 - dotnet tool install --global acr-synctool
 - Create [appsettings.json](appsettings.json) and fill out the details
   - AzureContainerRegistries
@@ -63,37 +66,37 @@ This tool is split into 3 different steps:
         "Password": "Access Tokens"
       }
     ],
-  "SyncedImages": [
-    {
-      "Image": "ghcr.io/fluxcd/helm-controller",
-      "Semver": ">=0.11.0"
-    },
-    {
-      "Image": "ghcr.io/fluxcd/image-automation-controller",
-      "Semver": ">=0.14.0"
-    },
-    {
-      "Image": "ghcr.io/fluxcd/image-reflector-controller",
-      "Semver": ">=0.11.0"
-    },
-    {
-      "Image": "ghcr.io/fluxcd/kustomize-controller",
-      "Semver": ">=0.14.0"
-    },
-    {
-      "Image": "ghcr.io/fluxcd/notification-controller",
-      "Semver": ">=0.16.0"
-    },
-    {
-      "Image": "ghcr.io/fluxcd/source-controller",
-      "Semver": ">=0.15.0"
-    },
-    {
-      "Image": "registry.hub.docker.com/nginx/nginx-ingress",
-      "Tags": [
-        "1.12.0"
-      ]
-    }
+    "SyncedImages": [
+      {
+        "Image": "ghcr.io/fluxcd/helm-controller",
+        "Semver": ">=0.11.0"
+      },
+      {
+        "Image": "ghcr.io/fluxcd/image-automation-controller",
+        "Semver": ">=0.14.0"
+      },
+      {
+        "Image": "ghcr.io/fluxcd/image-reflector-controller",
+        "Semver": ">=0.11.0"
+      },
+      {
+        "Image": "ghcr.io/fluxcd/kustomize-controller",
+        "Semver": ">=0.14.0"
+      },
+      {
+        "Image": "ghcr.io/fluxcd/notification-controller",
+        "Semver": ">=0.16.0"
+      },
+      {
+        "Image": "ghcr.io/fluxcd/source-controller",
+        "Semver": ">=0.15.0"
+      },
+      {
+        "Image": "registry.hub.docker.com/nginx/nginx-ingress",
+        "Tags": [
+          "1.12.0"
+        ]
+      }
     ]
   }
   ```
