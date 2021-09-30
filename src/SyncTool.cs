@@ -171,7 +171,7 @@
 
             if (currentImageSize > configuration.GetValue<double>("MaxSyncSizeGB"))
             {
-                logger.LogWarning("{0} - {1} - Reached Max Sync Size {2:D2}/{3}GB", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), currentImageSize, configuration.GetValue<double>("MaxSyncSizeGB"));
+                logger.LogWarning("{0} - {1} - Reached Max Sync Size {2:F2}/{3}GB", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), currentImageSize, configuration.GetValue<double>("MaxSyncSizeGB"));
                 break;
             }
 
