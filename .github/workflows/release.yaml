@@ -21,7 +21,7 @@ jobs:
         dotnet-version: 6.0.x
         include-prerelease: true
 
-    - name: Dotnet Publish
+    - name: Dotnet Build
       working-directory: src
       run: dotnet build -c Release
 
@@ -38,7 +38,7 @@ jobs:
       working-directory: src
       run: dotnet pack -c Release -p:Version=${{ steps.semantic.outputs.new_release_version }}
 
-    - name: Dotnet Nuget Push
+    - name: Dotnet NuGet Push
       if: steps.semantic.outputs.new_release_published == 'true'
       working-directory: src/bin/Release
       run: dotnet nuget push ACR-SyncTool.*.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
