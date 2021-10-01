@@ -44,7 +44,19 @@ public class DockerTagClient
 
         var request = CreateRequest(url);
 
-        var response = await httpClient.SendAsync(request);
+        HttpStatusCode[] httpStatusCodesWorthRetrying = {
+           HttpStatusCode.RequestTimeout, // 408
+           HttpStatusCode.TooManyRequests, // 429
+           HttpStatusCode.InternalServerError, // 500
+           HttpStatusCode.BadGateway, // 502
+           HttpStatusCode.ServiceUnavailable, // 503
+           HttpStatusCode.GatewayTimeout // 504
+        };
+
+        var response = await Policy
+              .HandleResult<HttpResponseMessage>(r => httpStatusCodesWorthRetrying.Contains(r.StatusCode))
+              .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)))
+              .ExecuteAsync(async () => await httpClient.SendAsync(request));
 
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
@@ -67,8 +79,7 @@ public class DockerTagClient
 
                 var pageQuery = matches.Groups[1].Value;
 
-                // Delay recursion to prevent "429 Too Many Requests" errors
-                await Task.Delay(TimeSpan.FromSeconds(10));
+                await Task.Delay(TimeSpan.FromSeconds(2));
 
                 var newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{host}{pageQuery}");
 
