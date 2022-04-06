@@ -131,7 +131,7 @@
 
             var repo = client.GetRepository(repositryName);
 
-            foreach (var manifest in repo.GetManifestPropertiesCollection())
+            foreach (var manifest in repo.GetAllManifestProperties())
             {
                 if (manifest.Tags.Count > 0)
                 {
