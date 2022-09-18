@@ -23,7 +23,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Containers.ContainerRegistry" Version="1.1.0-beta.4" />
     <PackageReference Include="Azure.Identity" Version="1.6.1" />
-    <PackageReference Include="Docker.DotNet" Version="3.125.10" />
+    <PackageReference Include="Docker.DotNet" Version="3.125.12" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
     <PackageReference Include="Polly" Version="7.2.3" />
