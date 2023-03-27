@@ -75,16 +75,17 @@ public class DockerTagClient
 
                 var pageQuery = matches.Groups[1].Value;
 
-                var pageQueryUri = new Uri(pageQuery);
+                if (Uri.TryCreate(pageQuery, new UriCreationOptions(), out var result))
+                {
+                    if (result.IsAbsoluteUri)
+                    {
+                        pageQuery = result.PathAndQuery;
+                    }
+                }
 
                 await Task.Delay(TimeSpan.FromSeconds(2));
 
                 List<string> newTags;
-
-                if (pageQueryUri.IsAbsoluteUri)
-                {
-                    pageQuery = pageQueryUri.PathAndQuery;
-                }
 
                 newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{Host}{pageQuery}");
 
