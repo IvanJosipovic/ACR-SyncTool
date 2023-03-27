@@ -4,12 +4,15 @@
 
     private readonly IConfiguration configuration;
 
+    private IServiceProvider serviceProvider;
+
     private const string ImageRegex = @"(^([a-zA-Z0-9_.-]+)\/((?:[a-z0-9_.-]+\/?)+))(?::?([a-z0-9_.-]+))?$";
 
-    public SyncTool(ILogger<SyncTool> logger, IConfiguration configuration)
+    public SyncTool(ILogger<SyncTool> logger, IConfiguration configuration, IServiceProvider serviceProvider)
     {
         this.logger = logger;
         this.configuration = configuration;
+        this.serviceProvider = serviceProvider;
     }
 
     private string GetHostImage(string image)
@@ -86,20 +89,30 @@
     {
         var registryConfig = GetRegistryConfig(GetHost(image));
 
-        DockerTagClient? client = null;
+        DockerTagClient? client = serviceProvider.GetRequiredService<DockerTagClient>();
 
         if (registryConfig == null || registryConfig.AuthType == null)
         {
-            client = new DockerTagClient(GetHost(image));
+            client.Host = GetHost(image);
         }
         else
         {
-            client = registryConfig.AuthType switch
+            client.Host = GetHost(image);
+
+            switch (registryConfig.AuthType)
             {
-                "Basic" => new DockerTagClient(GetHost(image), new BasicAuthenticationProvider(registryConfig.Username, registryConfig.Password)),
-                "PasswordOAuth" => new DockerTagClient(GetHost(image), new PasswordOAuthAuthenticationProvider(registryConfig.Username, registryConfig.Password)),
-                "AnonymousOAuth" => new DockerTagClient(GetHost(image), new AnonymousOAuthAuthenticationProvider()),
-                _ => throw new Exception($"Unknown AuthType: {registryConfig.AuthType}"),
+                case "Basic":
+                    client.AuthenticationProvider = new BasicAuthenticationProvider(registryConfig.Username, registryConfig.Password);
+                    break;
+                case "PasswordOAuth":
+                    client.AuthenticationProvider = new PasswordOAuthAuthenticationProvider(registryConfig.Username, registryConfig.Password);
+                        break;
+                case "AnonymousOAuth":
+                    client.AuthenticationProvider = new AnonymousOAuthAuthenticationProvider();
+                    break;
+                default:
+                    new Exception($"Unknown AuthType: {registryConfig.AuthType}");
+                    break;
             };
         }
 
@@ -309,6 +322,6 @@
 
         var images = await dockerClient.Images.ListImagesAsync(new ImagesListParameters() { All = true });
 
-        return images.Where(x => x.RepoTags[0] != "<none>:<none>").Sum(x => x.Size) / 1000000000.00;
+        return images.Where(x => x.RepoTags != null && x.RepoTags[0] != "<none>:<none>").Sum(x => x.Size) / 1000000000.00;
     }
 }

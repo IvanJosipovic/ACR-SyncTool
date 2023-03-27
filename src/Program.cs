@@ -10,6 +10,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     {
         services.AddHostedService<Worker>();
         services.AddSingleton<SyncTool>();
+        services.AddTransient<DockerTagClient>();
     })
     .Build();
 

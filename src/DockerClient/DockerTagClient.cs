@@ -5,29 +5,25 @@
 /// </summary>
 public class DockerTagClient
 {
-    private readonly string host;
+    public ILogger<DockerTagClient> Logger { get; set; }
 
-    private readonly AuthenticationProvider authenticationProvider;
+    public string Host;
+
+    public AuthenticationProvider AuthenticationProvider;
 
     public bool Https { get; set; } = true;
 
-    public DockerTagClient(string host)
+    public DockerTagClient(ILogger<DockerTagClient> logger)
     {
-        this.host = host;
-        this.authenticationProvider = new AnonymousOAuthAuthenticationProvider();
-    }
-
-    public DockerTagClient(string host, AuthenticationProvider authenticationProvider)
-    {
-        this.host = host;
-        this.authenticationProvider = authenticationProvider;
+        this.Logger = logger;
+        this.AuthenticationProvider = new AnonymousOAuthAuthenticationProvider();
     }
 
     public async Task<List<string>> GetTags(string image)
     {
         var tags = new List<string>();
 
-        tags.AddRange(await GetTagsRecursive($"{(Https ? "https" : "http")}://{host}/v2/{image}/tags/list"));
+        tags.AddRange(await GetTagsRecursive($"{(Https ? "https" : "http")}://{Host}/v2/{image}/tags/list"));
 
         return tags;
     }
@@ -38,7 +34,7 @@ public class DockerTagClient
 
         var handler = new HttpClientHandler();
 
-        handler = authenticationProvider.UpdateHttpClientHandler(handler);
+        handler = AuthenticationProvider.UpdateHttpClientHandler(handler);
 
         var httpClient = new HttpClient(handler);
 
@@ -62,7 +58,7 @@ public class DockerTagClient
         {
             var request2 = CreateRequest(url);
 
-            await authenticationProvider.AuthenticateAsync(request2, response);
+            await AuthenticationProvider.AuthenticateAsync(request2, response);
 
             response = await httpClient.SendAsync(request2);
         }
@@ -79,9 +75,18 @@ public class DockerTagClient
 
                 var pageQuery = matches.Groups[1].Value;
 
+                var pageQueryUri = new Uri(pageQuery);
+
                 await Task.Delay(TimeSpan.FromSeconds(2));
 
-                var newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{host}{pageQuery}");
+                List<string> newTags;
+
+                if (pageQueryUri.IsAbsoluteUri)
+                {
+                    pageQuery = pageQueryUri.PathAndQuery;
+                }
+
+                newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{Host}{pageQuery}");
 
                 tags.AddRange(newTags);
             }
