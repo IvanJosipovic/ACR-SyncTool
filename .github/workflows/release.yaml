@@ -1,4 +1,5 @@
-on: 
+on:
+  workflow_dispatch:
   push:
     branches: 
       - main
@@ -25,10 +26,8 @@ jobs:
       run: dotnet build -c Release
 
     - name: Semantic Release
-      uses: cycjimmy/semantic-release-action@v2
+      uses: cycjimmy/semantic-release-action@v3
       id: semantic
-      with:
-        semantic_version: 18
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
