@@ -89,7 +89,7 @@ public class DockerTagClient
 
                 List<string> newTags;
 
-                newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{Host}{HttpUtility.UrlDecode(pageQuery)}");
+                newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{Host}{pageQuery}");
 
                 tags.AddRange(newTags);
             }
