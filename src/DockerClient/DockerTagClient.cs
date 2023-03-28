@@ -1,4 +1,6 @@
-﻿namespace ACR_SyncTool.DockerClient;
+﻿using System.Web;
+
+namespace ACR_SyncTool.DockerClient;
 
 /// <summary>
 /// https://docs.docker.com/registry/spec/api
@@ -87,7 +89,7 @@ public class DockerTagClient
 
                 List<string> newTags;
 
-                newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{Host}{pageQuery}");
+                newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{Host}{HttpUtility.UrlDecode(pageQuery)}");
 
                 tags.AddRange(newTags);
             }
