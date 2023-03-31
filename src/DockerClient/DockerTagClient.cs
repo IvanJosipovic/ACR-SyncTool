@@ -1,6 +1,4 @@
-﻿using System.Web;
-
-namespace ACR_SyncTool.DockerClient;
+﻿namespace ACR_SyncTool.DockerClient;
 
 /// <summary>
 /// https://docs.docker.com/registry/spec/api
@@ -34,15 +32,17 @@ public class DockerTagClient
     {
         var tags = new List<string>();
 
-        var handler = new HttpClientHandler();
+        try
+        {
+            var handler = new HttpClientHandler();
 
-        handler = AuthenticationProvider.UpdateHttpClientHandler(handler);
+            handler = AuthenticationProvider.UpdateHttpClientHandler(handler);
 
-        var httpClient = new HttpClient(handler);
+            var httpClient = new HttpClient(handler);
 
-        var request = CreateRequest(url);
+            var request = CreateRequest(url);
 
-        HttpStatusCode[] httpStatusCodesWorthRetrying = {
+            HttpStatusCode[] httpStatusCodesWorthRetrying = {
            HttpStatusCode.RequestTimeout, // 408
            HttpStatusCode.TooManyRequests, // 429
            HttpStatusCode.InternalServerError, // 500
@@ -51,63 +51,69 @@ public class DockerTagClient
            HttpStatusCode.GatewayTimeout // 504
         };
 
-        var response = await Policy
-              .HandleResult<HttpResponseMessage>(r => httpStatusCodesWorthRetrying.Contains(r.StatusCode))
-              .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)))
-              .ExecuteAsync(async () => await httpClient.SendAsync(request));
+            var response = await Policy
+                  .HandleResult<HttpResponseMessage>(r => httpStatusCodesWorthRetrying.Contains(r.StatusCode))
+                  .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)))
+                  .ExecuteAsync(async () => await httpClient.SendAsync(request));
 
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
-        {
-            var request2 = CreateRequest(url);
-
-            await AuthenticationProvider.AuthenticateAsync(request2, response);
-
-            response = await httpClient.SendAsync(request2);
-        }
-
-        if (response.IsSuccessStatusCode)
-        {
-            var responseContent = await response.Content.ReadFromJsonAsync<ListImageTagsResponse>();
-
-            if (response.Headers.Contains("link"))
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                var link = response.Headers.GetValues("link").First();
-                Logger.LogDebug("Link: {0}", link);
+                var request2 = CreateRequest(url);
 
-                var matches = Regex.Match(link, "<(.+)>; rel=\"next\"");
+                await AuthenticationProvider.AuthenticateAsync(request2, response);
 
-                var pageQuery = matches.Groups[1].Value;
+                response = await httpClient.SendAsync(request2);
+            }
 
-                if (Uri.TryCreate(pageQuery, new UriCreationOptions(), out var result))
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadFromJsonAsync<ListImageTagsResponse>();
+
+                if (response.Headers.Contains("link"))
                 {
-                    if (result.IsAbsoluteUri)
+                    var link = response.Headers.GetValues("link").First();
+                    Logger.LogTrace("Link: {0}", link);
+
+                    var matches = Regex.Match(link, "<(.+)>; rel=\"next\"");
+
+                    var pageQuery = matches.Groups[1].Value;
+
+                    if (Uri.TryCreate(pageQuery, new UriCreationOptions(), out var result))
                     {
-                        Logger.LogDebug("IsAbSolute: {0}", result.PathAndQuery);
-                        pageQuery = result.PathAndQuery;
+                        if (result.IsAbsoluteUri && result.Scheme != "file")
+                        {
+                            pageQuery = result.LocalPath;
+
+                            Logger.LogTrace("IsAbsoluteUri: {0}", pageQuery);
+                        }
                     }
+
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+
+                    List<string> newTags;
+                    var newPageUrl = $"{(Https ? "https" : "http")}://{Host}{pageQuery}";
+
+                    Logger.LogTrace("NewPageUrl: {0}", newPageUrl);
+
+                    newTags = await GetTagsRecursive(newPageUrl);
+
+                    tags.AddRange(newTags);
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(2));
+                if (responseContent != null)
+                {
+                    tags.AddRange(responseContent.Tags);
+                }
 
-                List<string> newTags;
-                var newPageUrl = $"{(Https ? "https" : "http")}://{Host}{pageQuery}";
-
-                Logger.LogDebug("NewPageUrl: {0}", newPageUrl);
-
-                newTags = await GetTagsRecursive(newPageUrl);
-
-                tags.AddRange(newTags);
+                return tags;
             }
 
-            if (responseContent != null)
-            {
-                tags.AddRange(responseContent.Tags);
-            }
-
-            return tags;
+            Logger.LogCritical($"Error making HTTP call {response.StatusCode} - {url} - {await response.Content.ReadAsStringAsync()}");
         }
-
-        Logger.LogCritical($"Error making HTTP call {response.StatusCode} - {url} - {await response.Content.ReadAsStringAsync()}");
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, $"Error making HTTP call - {url}");
+        }
 
         return tags;
     }
