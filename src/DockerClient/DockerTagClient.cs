@@ -72,6 +72,7 @@ public class DockerTagClient
             if (response.Headers.Contains("link"))
             {
                 var link = response.Headers.GetValues("link").First();
+                Logger.LogDebug("Link: {0}", link);
 
                 var matches = Regex.Match(link, "<(.+)>; rel=\"next\"");
 
@@ -81,6 +82,7 @@ public class DockerTagClient
                 {
                     if (result.IsAbsoluteUri)
                     {
+                        Logger.LogDebug("IsAbSolute: {0}", result.PathAndQuery);
                         pageQuery = result.PathAndQuery;
                     }
                 }
@@ -88,8 +90,11 @@ public class DockerTagClient
                 await Task.Delay(TimeSpan.FromSeconds(2));
 
                 List<string> newTags;
+                var newPageUrl = $"{(Https ? "https" : "http")}://{Host}{pageQuery}";
 
-                newTags = await GetTagsRecursive($"{(Https ? "https" : "http")}://{Host}{pageQuery}");
+                Logger.LogDebug("NewPageUrl: {0}", newPageUrl);
+
+                newTags = await GetTagsRecursive(newPageUrl);
 
                 tags.AddRange(newTags);
             }
@@ -102,7 +107,9 @@ public class DockerTagClient
             return tags;
         }
 
-        throw new Exception($"Error making http call {response.StatusCode} - {url} - {await response.Content.ReadAsStringAsync()}");
+        Logger.LogCritical($"Error making HTTP call {response.StatusCode} - {url} - {await response.Content.ReadAsStringAsync()}");
+
+        return tags;
     }
 
     private HttpRequestMessage CreateRequest(string url)
