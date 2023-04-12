@@ -82,7 +82,7 @@ public class DockerTagClient
                     {
                         if (result.IsAbsoluteUri && result.Scheme != "file")
                         {
-                            pageQuery = result.LocalPath;
+                            pageQuery = result.PathAndQuery;
 
                             Logger.LogTrace("IsAbsoluteUri: {0}", pageQuery);
                         }
