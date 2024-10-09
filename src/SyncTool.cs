@@ -70,7 +70,7 @@
 
     private RegistryConfig? GetRegistryConfig(string host)
     {
-        return configuration.GetSection("Registries").Get<List<RegistryConfig>>().Find(x => x.Host == host);
+        return configuration.GetSection("Registries").Get<List<RegistryConfig>>().FirstOrDefault(x => x.Host == host);
     }
 
     private ACRConfig GetACRConfig(string host)
