@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UserSecretsId>dotnet-ACR_SyncTool-BC887A04-72C3-4B84-941B-59BFEB391E7A</UserSecretsId>
     <RootNamespace>ACR_SyncTool</RootNamespace>
@@ -24,11 +24,11 @@
     <PackageReference Include="Azure.Containers.ContainerRegistry" Version="1.1.1" />
     <PackageReference Include="Azure.Identity" Version="1.12.1" />
     <PackageReference Include="Docker.DotNet" Version="3.125.10" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageReference Include="Polly" Version="7.2.4" />
     <PackageReference Include="SemanticVersioning" Version="2.0.2" />
-    <PackageReference Include="System.Net.Http.Json" Version="6.0.1" />
+    <PackageReference Include="System.Net.Http.Json" Version="8.0.1" />
   </ItemGroup>
 
   <ItemGroup>
