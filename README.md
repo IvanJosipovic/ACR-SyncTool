@@ -22,7 +22,7 @@ This tool is split into 3 different steps:
 
 ## How to use
 
-- [Install .Net 6](https://dotnet.microsoft.com/download/dotnet/6.0/runtime)
+- [Install .Net 8](https://dotnet.microsoft.com/download/dotnet/8.0/runtime)
 - dotnet tool install --global acr-synctool
 - Create [appsettings.json](appsettings.json) and fill out the details
   - MaxSyncSizeGB
