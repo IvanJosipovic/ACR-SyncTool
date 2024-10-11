@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UserSecretsId>dotnet-ACR_SyncTool-BC887A04-72C3-4B84-941B-59BFEB391E7A</UserSecretsId>
     <RootNamespace>ACR_SyncTool</RootNamespace>
