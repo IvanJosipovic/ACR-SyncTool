@@ -55,6 +55,6 @@ jobs:
         user: IvanJosipovic
 
     - name: .NET NuGet Push
-      if: steps.outputs.outputs.new_release_published == 'true'
+      if: steps.semantic.outputs.new_release_published == 'true'
       run: dotnet nuget push src/**/*.nupkg -s https://api.nuget.org/v3/index.json -k ${{steps.login.outputs.NUGET_API_KEY}}
 
