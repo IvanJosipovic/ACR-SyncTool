@@ -1,7 +1,7 @@
 on:
   workflow_dispatch:
   push:
-    branches: 
+    branches:
       - main
       - alpha
       - beta
@@ -33,7 +33,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Dotnet Pack 
+    - name: Dotnet Pack
       if: steps.semantic.outputs.new_release_published == 'true'
       working-directory: src
       run: dotnet pack -c Release -p:Version=${{ steps.semantic.outputs.new_release_version }}

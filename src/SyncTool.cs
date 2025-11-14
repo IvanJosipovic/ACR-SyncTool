@@ -70,7 +70,7 @@
 
     private RegistryConfig? GetRegistryConfig(string host)
     {
-        return configuration.GetSection("Registries").Get<List<RegistryConfig>>().FirstOrDefault(x => x.Host == host);
+        return configuration.GetSection("Registries").Get<List<RegistryConfig>>()?.FirstOrDefault(x => x.Host == host);
     }
 
     private ACRConfig GetACRConfig(string host)
@@ -251,10 +251,20 @@
 
         if (savedImages.Count > 0)
         {
-            logger.LogInformation("{0} - {1} - Saving Images to Disk", nameof(PullAndSaveMissingImages), DateTimeOffset.Now);
-            using FileStream outputFileStream = new FileStream(imageTarFilePath, FileMode.Create);
-            var fileStream = await dockerClient.Images.SaveImagesAsync(savedImages.ToArray());
-            await fileStream.CopyToAsync(outputFileStream);
+
+            try
+            {
+                logger.LogInformation("{0} - {1} - Saving {2} Images to Disk", nameof(PullAndSaveMissingImages), DateTimeOffset.Now, savedImages.Count);
+                logger.LogInformation("{0} - {1} - Saving: {2}", nameof(PullAndSaveMissingImages), DateTimeOffset.Now, savedImages);
+
+                using FileStream outputFileStream = new FileStream(imageTarFilePath, FileMode.Create);
+                var fileStream = await dockerClient.Images.SaveImagesAsync(savedImages.ToArray());
+                await fileStream.CopyToAsync(outputFileStream);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
         else
         {
