@@ -251,20 +251,12 @@
 
         if (savedImages.Count > 0)
         {
+            logger.LogInformation("{0} - {1} - Saving {2} Images to Disk", nameof(PullAndSaveMissingImages), DateTimeOffset.Now, savedImages.Count);
+            logger.LogInformation("{0} - {1} - Saving: {2}", nameof(PullAndSaveMissingImages), DateTimeOffset.Now, savedImages);
 
-            try
-            {
-                logger.LogInformation("{0} - {1} - Saving {2} Images to Disk", nameof(PullAndSaveMissingImages), DateTimeOffset.Now, savedImages.Count);
-                logger.LogInformation("{0} - {1} - Saving: {2}", nameof(PullAndSaveMissingImages), DateTimeOffset.Now, savedImages);
-
-                using FileStream outputFileStream = new FileStream(imageTarFilePath, FileMode.Create);
-                var fileStream = await dockerClient.Images.SaveImagesAsync(savedImages.ToArray());
-                await fileStream.CopyToAsync(outputFileStream);
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
+            using FileStream outputFileStream = new FileStream(imageTarFilePath, FileMode.Create);
+            var fileStream = await dockerClient.Images.SaveImagesAsync(savedImages.ToArray());
+            await fileStream.CopyToAsync(outputFileStream);
         }
         else
         {
