@@ -29,8 +29,9 @@ public class Worker : BackgroundService
 
             string action = configuration.GetValue<string>("Action");
             string acrHostName = configuration.GetValue<string>("ACRHostName");
-            string imageTarFilePath = configuration.GetValue<string>("ImagesTarFilePath");
-            string jsonExportFilePath = configuration.GetValue<string>("JsonExportFilePath");
+
+            string jsonExportExistingFilePath = configuration.GetValue<string>("JsonExportExistingFilePath");
+            string jsonExportMissingFilePath = configuration.GetValue<string>("JsonExportMissingFilePath");
 
             if (string.IsNullOrEmpty(action))
             {
@@ -40,7 +41,7 @@ public class Worker : BackgroundService
                 return;
             }
 
-            if ((action == nameof(SyncTool.ExportExistingImages) || action == nameof(SyncTool.LoadAndPushImages)) && string.IsNullOrEmpty(acrHostName))
+            if ((action == nameof(SyncTool.ExportExistingImages) || action == nameof(SyncTool.ExportExistingImages)) && string.IsNullOrEmpty(acrHostName))
             {
                 logger.LogError("--ACRHostName parameter is missing");
                 Environment.ExitCode = 1;
@@ -48,17 +49,17 @@ public class Worker : BackgroundService
                 return;
             }
 
-            if ((action == nameof(SyncTool.PullAndSaveMissingImages) || action == nameof(SyncTool.LoadAndPushImages)) && string.IsNullOrEmpty(imageTarFilePath))
+            if ((action == nameof(SyncTool.ExportExistingImages) || action == nameof(SyncTool.ExportMissingImages)) && string.IsNullOrEmpty(jsonExportExistingFilePath))
             {
-                logger.LogError("--ImagesTarFilePath parameter is missing");
+                logger.LogError("--JsonExportExistingFilePath parameter is missing");
                 Environment.ExitCode = 1;
                 appLifetime.StopApplication();
                 return;
             }
 
-            if ((action == nameof(SyncTool.ExportExistingImages) || action == nameof(SyncTool.PullAndSaveMissingImages)) && string.IsNullOrEmpty(jsonExportFilePath))
+            if ((action == nameof(SyncTool.ExportMissingImages) || action == nameof(SyncTool.ImportMissingImages)) && string.IsNullOrEmpty(jsonExportMissingFilePath))
             {
-                logger.LogError("--JsonExportFilePath parameter is missing");
+                logger.LogError("--JsonExportMissingFilePath parameter is missing");
                 Environment.ExitCode = 1;
                 appLifetime.StopApplication();
                 return;
@@ -69,13 +70,13 @@ public class Worker : BackgroundService
             switch (action)
             {
                 case nameof(SyncTool.ExportExistingImages):
-                    syncTool.ExportExistingImages(acrHostName, jsonExportFilePath);
+                    syncTool.ExportExistingImages(acrHostName, jsonExportExistingFilePath);
                     break;
-                case nameof(SyncTool.PullAndSaveMissingImages):
-                    await syncTool.PullAndSaveMissingImages(jsonExportFilePath, imageTarFilePath);
+                case nameof(SyncTool.ExportMissingImages):
+                    await syncTool.ExportMissingImages(jsonExportExistingFilePath, jsonExportMissingFilePath);
                     break;
-                case nameof(SyncTool.LoadAndPushImages):
-                    await syncTool.LoadAndPushImages(imageTarFilePath, acrHostName);
+                case nameof(SyncTool.ImportMissingImages):
+                    await syncTool.ImportMissingImages(acrHostName, jsonExportMissingFilePath);
                     break;
                 default:
                     throw new Exception($"Unknown Action: {action}");
