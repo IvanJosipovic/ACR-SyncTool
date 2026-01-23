@@ -223,6 +223,12 @@ public class SyncTool
     {
         logger.LogInformation("{0} - {1} - Starting", DateTimeOffset.Now, nameof(ImportMissingImages));
 
+        if (!File.Exists(jsonExportMissingFilePath))
+        {
+            logger.LogWarning("{0} - {1} - Missing Image File doesn't exist!", DateTimeOffset.Now, nameof(ImportMissingImages));
+            return;
+        }
+
         var missingImages = await JsonSerializer.DeserializeAsync<List<string>>(File.OpenRead(jsonExportMissingFilePath));
 
         var acrConfig = GetACRConfig(acrHostName);
