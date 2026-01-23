@@ -19,7 +19,7 @@ public class Worker : BackgroundService
     {
         try
         {
-            if (!((ConfigurationRoot)configuration).Providers.Any(x => (x as JsonConfigurationProvider)?.Source.Path == "appsettings.json"))
+            if (!((ConfigurationRoot)configuration).Providers.Any(x => x is JsonConfigurationProvider { Source.Path: "appsettings.json" }))
             {
                 logger.LogError("Missing appsettings.json");
                 Environment.ExitCode = 1;
