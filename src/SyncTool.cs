@@ -190,19 +190,19 @@ public class SyncTool
             {
                 if (!string.IsNullOrEmpty(image.Semver) && !new SemanticVersioning.Range(image.Semver).IsSatisfied(tag))
                 {
-                    logger.LogDebug("{0} - {1} - Skipped to due Semver {2} {0}:{1}", DateTimeOffset.Now, nameof(ExportExistingImages), image.Semver, image.Image, tag);
+                    logger.LogDebug("{0} - {1} - Skipped to due Semver {2} {0}:{1}", DateTimeOffset.Now, nameof(ExportMissingImages), image.Semver, image.Image, tag);
                     continue;
                 }
 
                 if (!string.IsNullOrEmpty(image.Regex) && !Regex.IsMatch(tag, image.Regex))
                 {
-                    logger.LogDebug("{0} - {1} - Skipped to due Regex {2} {0}:{1}", DateTimeOffset.Now, nameof(ExportExistingImages), image.Regex, image.Image, tag);
+                    logger.LogDebug("{0} - {1} - Skipped to due Regex {2} {0}:{1}", DateTimeOffset.Now, nameof(ExportMissingImages), image.Regex, image.Image, tag);
                     continue;
                 }
 
                 if (existingImage == null || !existingImage.Tags.Contains(tag))
                 {
-                    logger.LogInformation("{0} - {1} - To Save {2}:{3}", DateTimeOffset.Now, nameof(ExportExistingImages), image.Image, tag);
+                    logger.LogInformation("{0} - {1} - To Save {2}:{3}", DateTimeOffset.Now, nameof(ExportMissingImages), image.Image, tag);
 
                     savedImages.Add($"{image.Image}:{tag}");
                 }
