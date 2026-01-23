@@ -41,7 +41,7 @@ public class Worker : BackgroundService
                 return;
             }
 
-            if ((action == nameof(SyncTool.ExportExistingImages) || action == nameof(SyncTool.ExportExistingImages)) && string.IsNullOrEmpty(acrHostName))
+            if ((action == nameof(SyncTool.ExportExistingImages) || action == nameof(SyncTool.ImportMissingImages)) && string.IsNullOrEmpty(acrHostName))
             {
                 logger.LogError("--ACRHostName parameter is missing");
                 Environment.ExitCode = 1;
