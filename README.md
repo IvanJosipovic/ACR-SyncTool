@@ -113,7 +113,7 @@ Utilizes the [Azure Container Registry Import feature](https://learn.microsoft.c
 ## Example Command Lines (execute in folder containing appsettings.json)
 
 - acr-synctool --Action ExportExistingImages --ACRHostName ijtestacr.azurecr.io --JsonExportExistingFilePath acr-export.json
-- acr-synctool --Action ExportMissingImages --ImagesTarFilePath images.tar --JsonExportExistingFilePath acr-export.json --JsonExportMissingFilePath acr-missing.json
+- acr-synctool --Action ExportMissingImages --JsonExportExistingFilePath acr-export.json --JsonExportMissingFilePath acr-missing.json
 - acr-synctool --Action ImportMissingImages --ACRHostName ijtestacr.azurecr.io --JsonExportMissingFilePath acr-missing.json
 
 ## Local Testing
