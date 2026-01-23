@@ -5,8 +5,6 @@ global using ACR_SyncTool.DockerClient.OAuth;
 global using ACR_SyncTool.Models;
 global using Azure.Containers.ContainerRegistry;
 global using Azure.Identity;
-global using Docker.DotNet;
-global using Docker.DotNet.Models;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.Configuration.Json;
 global using Microsoft.Extensions.DependencyInjection;
