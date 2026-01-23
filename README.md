@@ -20,7 +20,7 @@ This tool is split into 3 different steps:
 - ImportMissingImages
   - This final mode is meant to be ran on your private Azure DevOps agents. It will load the image json from the previous step and import them to your private Azure Container Registry.
 
-Utilizes the [Azure Container Registry Import feature](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-import-images?).
+Utilizes the [Azure Container Registry Import feature](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-import-images).
 
 ## How to use
 
