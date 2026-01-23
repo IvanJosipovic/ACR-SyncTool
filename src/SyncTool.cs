@@ -1,10 +1,15 @@
-﻿public class SyncTool
+﻿using Azure;
+using Azure.ResourceManager;
+using Azure.ResourceManager.ContainerRegistry;
+using Azure.ResourceManager.ContainerRegistry.Models;
+
+public class SyncTool
 {
     private readonly ILogger<SyncTool> logger;
 
     private readonly IConfiguration configuration;
 
-    private IServiceProvider serviceProvider;
+    private readonly IServiceProvider serviceProvider;
 
     private const string ImageRegex = @"(^([a-zA-Z0-9_.-]+)\/((?:[a-z0-9_.-]+\/?)+))(?::?([a-z0-9_.-]+))?$";
 
@@ -13,18 +18,6 @@
         this.logger = logger;
         this.configuration = configuration;
         this.serviceProvider = serviceProvider;
-    }
-
-    private string GetHostImage(string image)
-    {
-        var match = Regex.Match(image, ImageRegex);
-
-        if (!match.Success)
-        {
-            throw new Exception($"Image format is not valid: '{image}'. Should be host/repository/image");
-        }
-
-        return match.Groups[1].Value;
     }
 
     private string GetHost(string image)
@@ -85,6 +78,37 @@
         return acrConfig;
     }
 
+    // Input must be a bare host like: myreg-abc123.azurecr.io (no scheme, no path)
+    // Supports any suffix after "azurecr." like: io, us, cn, etc.
+    public static string GetACRName(string acrLoginServer)
+    {
+        if (string.IsNullOrWhiteSpace(acrLoginServer))
+            throw new ArgumentException("Value cannot be empty.", nameof(acrLoginServer));
+
+        var host = acrLoginServer.Trim();
+
+        if (host.Contains("://", StringComparison.Ordinal))
+            throw new FormatException("Scheme not allowed. Provide only the login server host.");
+
+        if (host.Contains("/", StringComparison.Ordinal) || host.Contains("?", StringComparison.Ordinal) || host.Contains("#", StringComparison.Ordinal))
+            throw new FormatException("Path, query, or fragment not allowed. Provide only the login server host.");
+
+        const string marker = ".azurecr.";
+        var idx = host.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (idx <= 0)
+            throw new FormatException("Not an ACR login server.");
+
+        var name = host.Substring(0, idx);
+        if (name.Contains('.', StringComparison.Ordinal))
+            throw new FormatException("Unexpected host format for an ACR login server.");
+
+        var suffix = host.Substring(idx + marker.Length);
+        if (string.IsNullOrWhiteSpace(suffix) || suffix.Contains('.', StringComparison.Ordinal))
+            throw new FormatException("Invalid ACR suffix.");
+
+        return name;
+    }
+
     private async Task<List<string>> GetTags(string image)
     {
         var registryConfig = GetRegistryConfig(GetHost(image));
@@ -119,7 +143,7 @@
         return await client.GetTags(GetImage(image));
     }
 
-    public void ExportExistingImages(string acrHostName, string jsonExportFilePath)
+    public void ExportExistingImages(string acrHostName, string jsonExportExistingFilePath)
     {
         logger.LogInformation("{0} - {1} - Starting", DateTimeOffset.Now, nameof(ExportExistingImages));
 
@@ -157,37 +181,27 @@
 
         var json = JsonSerializer.Serialize(export, new JsonSerializerOptions() { WriteIndented = true });
 
-        File.WriteAllText(jsonExportFilePath, json);
+        File.WriteAllText(jsonExportExistingFilePath, json);
 
         logger.LogInformation("{0} - {1} - Ending", DateTimeOffset.Now, nameof(ExportExistingImages));
     }
 
-    public async Task PullAndSaveMissingImages(string jsonExportFilePath, string imageTarFilePath)
+    public async Task ExportMissingImages(string jsonExportExistingFilePath, string jsonExportMissingFilePath)
     {
-        logger.LogInformation("{0} - {1} - Starting", DateTimeOffset.Now, nameof(PullAndSaveMissingImages));
+        logger.LogInformation("{0} - {1} - Starting", DateTimeOffset.Now, nameof(ExportMissingImages));
 
-        if (!File.Exists(jsonExportFilePath))
+        if (!File.Exists(jsonExportExistingFilePath))
         {
-            logger.LogWarning("{0} - {1} - Existing Image File doesn't exist!", DateTimeOffset.Now, nameof(LoadAndPushImages));
+            logger.LogWarning("{0} - {1} - Existing Image File doesn't exist!", DateTimeOffset.Now, nameof(ExportMissingImages));
             return;
         }
 
-        var existingImages = JsonSerializer.Deserialize<List<ImageExport>>(File.OpenRead(jsonExportFilePath));
-
-        var dockerClient = new DockerClientConfiguration().CreateClient();
+        var existingImages = JsonSerializer.Deserialize<List<ImageExport>>(File.OpenRead(jsonExportExistingFilePath));
 
         var savedImages = new List<string>();
 
         foreach (SyncedImage image in GetSyncedImages())
         {
-            var currentImageSize = await GetCurrentImageSizesGB();
-
-            if (currentImageSize > configuration.GetValue<double>("MaxSyncSizeGB"))
-            {
-                logger.LogWarning("{0} - {1} - Reached Max Sync Size {2:F2}/{3}GB", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), currentImageSize, configuration.GetValue<double>("MaxSyncSizeGB"));
-                break;
-            }
-
             var existingImage = existingImages?.FirstOrDefault(x => x.Image == image.Image);
 
             var registryConfig = GetRegistryConfig(GetHost(image.Image));
@@ -205,125 +219,82 @@
 
             foreach (var tag in tags)
             {
-                if (await GetCurrentImageSizesGB() > configuration.GetValue<double>("MaxSyncSizeGB"))
+                if (!string.IsNullOrEmpty(image.Semver) && !new SemanticVersioning.Range(image.Semver, true).IsSatisfied(tag, true))
                 {
-                    break;
-                }
-
-                if (!string.IsNullOrEmpty(image.Semver) && !new SemanticVersioning.Range(image.Semver).IsSatisfied(tag))
-                {
-                    logger.LogDebug("{0} - {1} - Skipped to due Semver {2} {0}:{1}", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), image.Semver, image.Image, tag);
+                    logger.LogDebug("{0} - {1} - Skipped to due Semver {2} {0}:{1}", DateTimeOffset.Now, nameof(ExportMissingImages), image.Semver, image.Image, tag);
                     continue;
                 }
 
                 if (!string.IsNullOrEmpty(image.Regex) && !Regex.IsMatch(tag, image.Regex))
                 {
-                    logger.LogDebug("{0} - {1} - Skipped to due Regex {2} {0}:{1}", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), image.Regex, image.Image, tag);
+                    logger.LogDebug("{0} - {1} - Skipped to due Regex {2} {0}:{1}", DateTimeOffset.Now, nameof(ExportMissingImages), image.Regex, image.Image, tag);
                     continue;
                 }
 
                 if (existingImage == null || !existingImage.Tags.Contains(tag))
                 {
-                    logger.LogInformation("{0} - {1} - Pulling {2}:{3}", DateTimeOffset.Now, nameof(PullAndSaveMissingImages), image.Image, tag);
+                    logger.LogInformation("{0} - {1} - To Save {2}:{3}", DateTimeOffset.Now, nameof(ExportMissingImages), image.Image, tag);
 
                     savedImages.Add($"{image.Image}:{tag}");
-
-                    var authConfig = new AuthConfig();
-
-                    if (registryConfig != null)
-                    {
-                        authConfig.Username = registryConfig.Username;
-                        authConfig.Password = registryConfig.Password;
-                    }
-
-                    await dockerClient.Images.CreateImageAsync(
-                        new ImagesCreateParameters
-                        {
-                            FromImage = image.Image,
-                            Tag = tag,
-                        },
-                        authConfig,
-                        new Progress<JSONMessage>()
-                    );
                 }
+            }
+
+            if (savedImages.Count != 0)
+            {
+                var json = JsonSerializer.Serialize(savedImages, new JsonSerializerOptions() { WriteIndented = true });
+
+                await File.WriteAllTextAsync(jsonExportMissingFilePath, json);
             }
         }
 
-        if (savedImages.Count > 0)
-        {
-            logger.LogInformation("{0} - {1} - Saving {2} Images to Disk", nameof(PullAndSaveMissingImages), DateTimeOffset.Now, savedImages.Count);
-            logger.LogInformation("{0} - {1} - Saving: {2}", nameof(PullAndSaveMissingImages), DateTimeOffset.Now, savedImages);
-
-            using FileStream outputFileStream = new FileStream(imageTarFilePath, FileMode.Create);
-            var fileStream = await dockerClient.Images.SaveImagesAsync(savedImages.ToArray());
-            await fileStream.CopyToAsync(outputFileStream);
-        }
-        else
-        {
-            logger.LogInformation("{0} - {1} - No new Images to save", nameof(PullAndSaveMissingImages), DateTimeOffset.Now);
-        }
-
-        logger.LogInformation("{0} - {1} - Ending", DateTimeOffset.Now, nameof(PullAndSaveMissingImages));
+        logger.LogInformation("{0} - {1} - Ending", DateTimeOffset.Now, nameof(ExportExistingImages));
     }
 
-    public async Task LoadAndPushImages(string imageTarFilePath, string acrHostName)
+    public async Task ImportMissingImages(string acrHostName, string jsonExportMissingFilePath)
     {
-        logger.LogInformation("{0} - {1} - Starting", DateTimeOffset.Now, nameof(LoadAndPushImages));
+        logger.LogInformation("{0} - {1} - Starting", DateTimeOffset.Now, nameof(ImportMissingImages));
 
-        if (!File.Exists(imageTarFilePath))
+        if (!File.Exists(jsonExportMissingFilePath))
         {
-            logger.LogWarning("{0} - {1} - Input File doesn't exist!", DateTimeOffset.Now, nameof(LoadAndPushImages));
+            logger.LogWarning("{0} - {1} - Missing Image File doesn't exist!", DateTimeOffset.Now, nameof(ImportMissingImages));
             return;
         }
 
-        var dockerClient = new DockerClientConfiguration().CreateClient();
+        var missingImages = await JsonSerializer.DeserializeAsync<List<string>>(File.OpenRead(jsonExportMissingFilePath));
 
-        using var input = File.OpenRead(imageTarFilePath);
+        var acrConfig = GetACRConfig(acrHostName);
 
-        var progressJSONMessage = new Progress<JSONMessage>();
+        var cred = new ClientSecretCredential(acrConfig.TenantId, acrConfig.ClientId, acrConfig.Secret);
+        var arm = new ArmClient(cred);
 
-        logger.LogInformation("{0} - {1} - Loading Images", DateTimeOffset.Now, nameof(LoadAndPushImages));
+        var targetId = ContainerRegistryResource.CreateResourceIdentifier(acrConfig.SubscriptionId, acrConfig.ResourceGroupName, GetACRName(acrConfig.Host));
+        var target = arm.GetContainerRegistryResource(targetId);
 
-        await dockerClient.Images.LoadImageAsync(new ImageLoadParameters(), input, progressJSONMessage);
-
-        var images = await dockerClient.Images.ListImagesAsync(new ImagesListParameters() { All = true });
-
-        var registryConfig = GetACRConfig(acrHostName);
-
-        var syncedImages = GetSyncedImages();
-
-        foreach (var image in images)
+        foreach (var image in missingImages)
         {
-            if (image.RepoTags[0] == "<none>:<none>" || !syncedImages.Any(x => x.Image == GetHostImage(image.RepoTags[0])))
+            var importSource = new ContainerRegistryImportSource(GetImage(image) + ":" + GetTag(image))
             {
-                continue;
+                RegistryAddress = GetHost(image),
+            };
+
+            var registryConfig = GetRegistryConfig(GetHost(image));
+
+            if (registryConfig != null && !string.IsNullOrEmpty(registryConfig.Username) && !string.IsNullOrEmpty(registryConfig.Password))
+            {
+                importSource.Credentials = new ContainerRegistryImportSourceCredentials(registryConfig.Password) { Username = registryConfig.Username };
             }
 
-            logger.LogInformation("{0} - {1} - Pushing Image {2}", DateTimeOffset.Now, nameof(LoadAndPushImages), $"{acrHostName}/{GetHostImage(image.RepoTags[0])}:{GetTag(image.RepoTags[0])}");
+            var content = new ContainerRegistryImportImageContent(importSource)
+            {
+                Mode = ContainerRegistryImportMode.Force
+            };
 
-            await dockerClient.Images.TagImageAsync(image.RepoTags[0], new ImageTagParameters() { RepositoryName = $"{acrHostName}/{GetHostImage(image.RepoTags[0])}", Tag = GetTag(image.RepoTags[0]) });
+            content.TargetTags.Add(image);
 
-            await dockerClient.Images.PushImageAsync(
-                $"{acrHostName}/{GetHostImage(image.RepoTags[0])}",
-                new ImagePushParameters() { Tag = GetTag(image.RepoTags[0]) },
-                new AuthConfig()
-                {
-                    Username = registryConfig.ClientId,
-                    Password = registryConfig.Secret
-                },
-                progressJSONMessage
-            );
+            logger.LogInformation("{0} - {1} - Importing {2}", DateTimeOffset.Now, nameof(ImportMissingImages), image);
+            await target.ImportImageAsync(WaitUntil.Completed, content);
         }
 
-        logger.LogInformation("{0} - {1} - Ending", DateTimeOffset.Now, nameof(LoadAndPushImages));
-    }
-
-    private async Task<double> GetCurrentImageSizesGB()
-    {
-        var dockerClient = new DockerClientConfiguration().CreateClient();
-
-        var images = await dockerClient.Images.ListImagesAsync(new ImagesListParameters() { All = true });
-
-        return images.Where(x => x.RepoTags != null && x.RepoTags[0] != "<none>:<none>").Sum(x => x.Size) / 1000000000.00;
+        logger.LogInformation("{0} - {1} - Ending", DateTimeOffset.Now, nameof(ImportMissingImages));
     }
 }

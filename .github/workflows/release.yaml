@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 10
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v5
@@ -33,7 +33,6 @@ jobs:
         global-json-file: global.json
 
     - name: Dotnet Build
-      working-directory: src
       run: dotnet build -c Release
 
     - name: Semantic Release
@@ -41,11 +40,18 @@ jobs:
       id: semantic
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        extra_plugins: |
+          conventional-changelog-conventionalcommits
 
     - name: Dotnet Pack
-      if: steps.semantic.outputs.new_release_published == 'true'
-      working-directory: src
-      run: dotnet pack -c Release -p:Version=${{ steps.semantic.outputs.new_release_version }}
+      run: dotnet pack -c Release -p:Version=${{ (steps.semantic.outputs.new_release_published && steps.semantic.outputs.new_release_version) || '0.0.1' }}
+
+    - name: Upload NuGet Packages
+      uses: actions/upload-artifact@v6
+      with:
+        name: NuGet Package
+        path: src/**/*.nupkg
 
     - name: NuGet login (OIDC → temp API key)
       if: steps.semantic.outputs.new_release_published == 'true'

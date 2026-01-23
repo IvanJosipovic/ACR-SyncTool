@@ -5,7 +5,7 @@
 
 ## What is this for?
 
-It is common practice to have the Azure Container Registry behind a firewall and inaccessable from the outside world. Additionally, it is common practice to prevent AKS from loading images from public Docker Repositories. These two practices make it difficult to deploy images to the AKS cluster.
+It is common practice to have the Azure Container Registry behind a firewall and inaccessible from the outside world. Additionally, it is common practice to prevent AKS from loading images from public Docker Repositories. These two practices make it difficult to deploy images to the AKS cluster.
 
 This tool aims to make this process easier by allowing you to sync images from a Docker Registry to the private Azure Container Registries.
 
@@ -15,18 +15,18 @@ This tool is split into 3 different steps:
 
 - ExportExistingImages
   - The first step is meant to be ran on your private Azure DevOps agents which have access to the Azure Container Registry. This step will export all the image names and tags to a json file. Your CI/CD pipeline should save this file to the Pipeline Artifacts and make it accessible to the next step.
-- PullAndSaveMissingImages
-  - The second step is meant to be ran on the Microsoft Hosted Azure DevOps agents and will pull all the images and tags from the Docker Registries that you are missing and save them to a tar file. Your CI/CD pipeline should save this file to the Pipeline Artifacts and make it accessible to the next step.
-- LoadAndPushImages
-  - This final mode is meant to be ran on your private Azure DevOps agents. It will load the image tar from the previous step, re tag them and push them to your private Azure Container Registry.
+- ExportMissingImages
+  - The second step is meant to be ran on the Microsoft Hosted Azure DevOps agents and will pull all the images and tags from the Docker Registries that you are missing and save them to a json file. Your CI/CD pipeline should save this file to the Pipeline Artifacts and make it accessible to the next step.
+- ImportMissingImages
+  - This final mode is meant to be ran on your private Azure DevOps agents. It will load the image json from the previous step and import them to your private Azure Container Registry.
+
+Utilizes the [Azure Container Registry Import feature](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-import-images).
 
 ## How to use
 
-- [Install .Net 8](https://dotnet.microsoft.com/download/dotnet/8.0/runtime)
+- [Install .Net 10](https://dotnet.microsoft.com/download/dotnet/10.0/runtime)
 - dotnet tool install --global acr-synctool
 - Create [appsettings.json](appsettings.json) and fill out the details
-  - MaxSyncSizeGB
-    - Max total image size to sync. Once reached the rest will be skipped.
   - AzureContainerRegistries
     - List of Azure Container Registries with Service Principle Credentials
   - Registries
@@ -46,7 +46,6 @@ This tool is split into 3 different steps:
 
 - ```json
   {
-    "MaxSyncSizeGB": "5",
     "AzureContainerRegistries": [
       {
         "Host": "ijtestacr.azurecr.io",
@@ -67,6 +66,10 @@ This tool is split into 3 different steps:
         "AuthType": "PasswordOAuth",
         "Username": "ivanjosipovic",
         "Password": "Access Tokens"
+      },
+      {
+        "Host": "xpkg.upbound.io",
+        "AuthType": "AnonymousOAuth"
       }
     ],
     "SyncedImages": [
@@ -106,9 +109,9 @@ This tool is split into 3 different steps:
 
 ## Example Command Lines (execute in folder containing appsettings.json)
 
-- acr-synctool --Action ExportExistingImages --ACRHostName ijtestacr.azurecr.io --JsonExportFilePath acr-export.json
-- acr-synctool --Action PullAndSaveMissingImages --ImagesTarFilePath images.tar --JsonExportFilePath acr-export.json
-- acr-synctool --Action LoadAndPushImages --ACRHostName ijtestacr.azurecr.io --ImagesTarFilePath images.tar
+- acr-synctool --Action ExportExistingImages --ACRHostName ijtestacr.azurecr.io --JsonExportExistingFilePath acr-export.json
+- acr-synctool --Action ExportMissingImages --JsonExportExistingFilePath acr-export.json --JsonExportMissingFilePath acr-missing.json
+- acr-synctool --Action ImportMissingImages --ACRHostName ijtestacr.azurecr.io --JsonExportMissingFilePath acr-missing.json
 
 ## Local Testing
 

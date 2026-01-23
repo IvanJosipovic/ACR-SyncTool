@@ -350,5 +350,5 @@ MigrationBackup/
 .ionide/
 
 # Exclude Test files
-/src/images.tar
 /src/acr-export.json
+/src/acr-missing.json
