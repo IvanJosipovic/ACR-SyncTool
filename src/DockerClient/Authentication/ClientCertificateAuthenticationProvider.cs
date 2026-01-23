@@ -19,7 +19,7 @@ public class ClientCertificateAuthenticationProvider : AuthenticationProvider
 
     public override HttpClientHandler UpdateHttpClientHandler(HttpClientHandler httpClientHandler)
     {
-        var cert = new X509Certificate2(_path, _key);
+        var cert = X509CertificateLoader.LoadPkcs12FromFile(_path, _key);
         httpClientHandler.ClientCertificates.Add(cert);
 
         httpClientHandler.SslProtocols = SslProtocols.Tls12;

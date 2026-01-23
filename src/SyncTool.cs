@@ -219,7 +219,7 @@ public class SyncTool
 
             foreach (var tag in tags)
             {
-                if (!string.IsNullOrEmpty(image.Semver) && !new SemanticVersioning.Range(image.Semver).IsSatisfied(tag))
+                if (!string.IsNullOrEmpty(image.Semver) && !new SemanticVersioning.Range(image.Semver, true).IsSatisfied(tag, true))
                 {
                     logger.LogDebug("{0} - {1} - Skipped to due Semver {2} {0}:{1}", DateTimeOffset.Now, nameof(ExportMissingImages), image.Semver, image.Image, tag);
                     continue;

@@ -46,7 +46,6 @@ Utilizes the [Azure Container Registry Import feature](https://learn.microsoft.c
 
 - ```json
   {
-    "MaxSyncSizeGB": "5",
     "AzureContainerRegistries": [
       {
         "Host": "ijtestacr.azurecr.io",
