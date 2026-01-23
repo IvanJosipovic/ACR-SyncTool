@@ -27,8 +27,6 @@ Utilizes the [Azure Container Registry Import feature](https://learn.microsoft.c
 - [Install .Net 10](https://dotnet.microsoft.com/download/dotnet/10.0/runtime)
 - dotnet tool install --global acr-synctool
 - Create [appsettings.json](appsettings.json) and fill out the details
-  - MaxSyncSizeGB
-    - Max total image size to sync. Once reached the rest will be skipped.
   - AzureContainerRegistries
     - List of Azure Container Registries with Service Principle Credentials
   - Registries

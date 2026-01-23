@@ -78,6 +78,37 @@ public class SyncTool
         return acrConfig;
     }
 
+    // Input must be a bare host like: myreg-abc123.azurecr.io (no scheme, no path)
+    // Supports any suffix after "azurecr." like: io, us, cn, etc.
+    public static string GetACRName(string acrLoginServer)
+    {
+        if (string.IsNullOrWhiteSpace(acrLoginServer))
+            throw new ArgumentException("Value cannot be empty.", nameof(acrLoginServer));
+
+        var host = acrLoginServer.Trim();
+
+        if (host.Contains("://", StringComparison.Ordinal))
+            throw new FormatException("Scheme not allowed. Provide only the login server host.");
+
+        if (host.Contains("/", StringComparison.Ordinal) || host.Contains("?", StringComparison.Ordinal) || host.Contains("#", StringComparison.Ordinal))
+            throw new FormatException("Path, query, or fragment not allowed. Provide only the login server host.");
+
+        const string marker = ".azurecr.";
+        var idx = host.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (idx <= 0)
+            throw new FormatException("Not an ACR login server.");
+
+        var name = host.Substring(0, idx);
+        if (name.Contains('.', StringComparison.Ordinal))
+            throw new FormatException("Unexpected host format for an ACR login server.");
+
+        var suffix = host.Substring(idx + marker.Length);
+        if (string.IsNullOrWhiteSpace(suffix) || suffix.Contains('.', StringComparison.Ordinal))
+            throw new FormatException("Invalid ACR suffix.");
+
+        return name;
+    }
+
     private async Task<List<string>> GetTags(string image)
     {
         var registryConfig = GetRegistryConfig(GetHost(image));
@@ -236,7 +267,7 @@ public class SyncTool
         var cred = new ClientSecretCredential(acrConfig.TenantId, acrConfig.ClientId, acrConfig.Secret);
         var arm = new ArmClient(cred);
 
-        var targetId = ContainerRegistryResource.CreateResourceIdentifier(acrConfig.SubscriptionId, acrConfig.ResourceGroupName, acrConfig.Host.Replace(".azurecr.io", ""));
+        var targetId = ContainerRegistryResource.CreateResourceIdentifier(acrConfig.SubscriptionId, acrConfig.ResourceGroupName, GetACRName(acrConfig.Host));
         var target = arm.GetContainerRegistryResource(targetId);
 
         foreach (var image in missingImages)
