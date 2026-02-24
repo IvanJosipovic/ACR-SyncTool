@@ -299,6 +299,7 @@ public class SyncTool
             catch (Exception ex)
             {
                 logger.LogError(ex, "{0} - {1} - Failed Importing {2}", DateTimeOffset.Now, nameof(ImportMissingImages), image);
+                Environment.ExitCode = 1;
             }
         }
 
