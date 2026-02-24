@@ -272,27 +272,34 @@ public class SyncTool
 
         foreach (var image in missingImages)
         {
-            var importSource = new ContainerRegistryImportSource(GetImage(image) + ":" + GetTag(image))
+            try
             {
-                RegistryAddress = GetHost(image),
-            };
+                var importSource = new ContainerRegistryImportSource(GetImage(image) + ":" + GetTag(image))
+                {
+                    RegistryAddress = GetHost(image),
+                };
 
-            var registryConfig = GetRegistryConfig(GetHost(image));
+                var registryConfig = GetRegistryConfig(GetHost(image));
 
-            if (registryConfig != null && !string.IsNullOrEmpty(registryConfig.Username) && !string.IsNullOrEmpty(registryConfig.Password))
-            {
-                importSource.Credentials = new ContainerRegistryImportSourceCredentials(registryConfig.Password) { Username = registryConfig.Username };
+                if (registryConfig != null && !string.IsNullOrEmpty(registryConfig.Username) && !string.IsNullOrEmpty(registryConfig.Password))
+                {
+                    importSource.Credentials = new ContainerRegistryImportSourceCredentials(registryConfig.Password) { Username = registryConfig.Username };
+                }
+
+                var content = new ContainerRegistryImportImageContent(importSource)
+                {
+                    Mode = ContainerRegistryImportMode.Force
+                };
+
+                content.TargetTags.Add(image);
+
+                logger.LogInformation("{0} - {1} - Importing {2}", DateTimeOffset.Now, nameof(ImportMissingImages), image);
+                await target.ImportImageAsync(WaitUntil.Completed, content);
             }
-
-            var content = new ContainerRegistryImportImageContent(importSource)
+            catch (Exception ex)
             {
-                Mode = ContainerRegistryImportMode.Force
-            };
-
-            content.TargetTags.Add(image);
-
-            logger.LogInformation("{0} - {1} - Importing {2}", DateTimeOffset.Now, nameof(ImportMissingImages), image);
-            await target.ImportImageAsync(WaitUntil.Completed, content);
+                logger.LogError(ex, "{0} - {1} - Failed Importing {2}", DateTimeOffset.Now, nameof(ImportMissingImages), image);
+            }
         }
 
         logger.LogInformation("{0} - {1} - Ending", DateTimeOffset.Now, nameof(ImportMissingImages));
