@@ -86,12 +86,9 @@ public class Worker : BackgroundService
         {
             logger.LogError(ex, "SyncTool Fatal Error");
             Environment.ExitCode = 1;
-            appLifetime.StopApplication();
-            return;
         }
 
         logger.LogInformation("SyncTool complated at: {time}", DateTimeOffset.Now);
-        Environment.ExitCode = 0;
         appLifetime.StopApplication();
     }
 }
