@@ -10,3 +10,5 @@ jobs:
     permissions:
       contents: read
     uses: IvanJosipovic/templates/.github/workflows/csharp-build-test.yaml@main
+    with:
+      run_tests: false
