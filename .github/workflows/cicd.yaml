@@ -25,6 +25,7 @@ jobs:
     uses: IvanJosipovic/templates/.github/workflows/csharp-build-test.yaml@main
     with:
       version: ${{ needs.get-version.outputs.new_release_version }}
+      run_tests: false
 
   create-release:
     name: Create Release
